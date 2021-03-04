@@ -1,0 +1,91 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<!-->
+Utility file to enable running jobs in Google Sheets by opening a sidebar on the user's browser.
+This circumvents Apps Script's execution time limits and allows for parallelization.
+<-->
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <title>Audiences Bulk Changes Manager</title>
+  <style>
+    #status {
+      font-weight: bold;
+    }
+    .active {
+      color: green;
+    }
+    .not-active {
+      color: #777777;
+    }
+  </style>
+  <script>
+    function setStatus(statusText, statusClass) {
+      const statusElem = document.getElementById('status');
+      statusElem.innerHTML = statusText;
+      statusElem.className = statusClass;
+    }
+
+    async function createAudiencesHandler() {
+      setStatus('Running...', 'active');
+      await Logger.getLogger().clear();
+      const createAudiencesResult = await Runner.init().run('createAudiencesJob', [new Job()]);
+      const createAudienceResult =
+            await Runner.init().run('createAudienceJob', createAudiencesResult[0].jobs);
+      await Logger.getLogger().log(createAudienceResult);
+      setStatus('Ready', 'not-active');
+    }
+
+    async function updateAudiencesHandler() {
+      setStatus('Running...', 'active');
+      await Logger.getLogger().clear();
+      const updateAudiencesResult = await Runner.init().run('updateAudiencesJob', [new Job()]);
+      const updateAudienceResult =
+            await Runner.init().run('updateAudienceJob', updateAudiencesResult[0].jobs);
+      await Logger.getLogger().log(updateAudienceResult);
+      setStatus('Ready', 'not-active');
+    }
+
+    async function updateAllAudiencesHandler() {
+      setStatus('Running...', 'active');
+      await Logger.getLogger().clear();
+      const updateAllAudiencesResult = await Runner.init().run('updateAllAudiencesJob', [new Job()]);
+      const updateAudienceResult =
+            await Runner.init().run('updateAudienceJob', updateAllAudiencesResult[0].jobs);
+      await Logger.getLogger().log(updateAudienceResult);
+      setStatus('Ready', 'not-active');
+    }
+  </script>
+  <?!= include('ui/job/client/job') ?>
+  <?!= include('ui/job/client/runner') ?>
+  <?!= include('ui/job/client/logger') ?>
+</head>
+<body>
+  <br/>
+  Status: <span id='status' class='not-active'>Ready</span>
+  <br/>
+  <br/>
+  <button id='create-audiences' onclick='createAudiencesHandler()'>Create Audiences</button>
+  <br/>
+  <br/>
+  <button id='update-audiences' onclick='updateAudiencesHandler()'>Update Audiences</button>
+  <br/>
+  <br/>
+  <button id='update-all-audiences'
+          onclick='updateAllAudiencesHandler()'>Share ALL Audiences with ALL Advertisers</button>
+  <br/>
+</body>

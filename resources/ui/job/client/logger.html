@@ -1,0 +1,112 @@
+<script>
+/**
+ * @license
+ * Copyright 2021 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * @fileoverview This file encapsulates logging functionality for the jobs
+ * infrastructure.
+ */
+
+
+/**
+ * @class Logger representing a utility class for logging functionality.
+ */
+class Logger {
+  /**
+   * @constructs an instance of Logger using an optionally provided offset
+   * indicating how many rows to skip before logging in the relevant sheet.
+   *
+   * @param {number=} offset The offset to use
+   */
+  constructor(offset = 0) {
+    /** @private {number} */
+    this.offset_ = offset;
+  }
+
+  /**
+   * Returns the singleton logger instance.
+   * @see jobs.html#getLogger
+   *
+   * @return {!Logger} The Logger instance
+   */
+  static getLogger() {
+    if (!this.logger_) {
+      this.logger_ = new Logger();
+    }
+    return this.logger_;
+  }
+
+  /**
+   * Clears and resets the log.
+   * @see jobs.html
+   * @see jobs.js#clearLogs
+   *
+   * @return {!Promise<!Array<!Job>>} A Promise for running the clearLogs method
+   */
+  async clear() {
+    this.offset_ = 0;
+    const job = new Job();
+
+    return Runner.init().run('clearLogs', [job]);
+  }
+
+  /**
+   * Writes logs from jobs to the log sheet.
+   * @see jobs.js#writeLogs
+   *
+   * @param {!Array<!Job>} jobs The jobs to use
+   * @return {!Promise<!Array<!Job>>} A Promise containing the input jobs after
+   *     having written (and cleared) their logs
+   */
+  async log(jobs) {
+    const job = new Job(
+        /* id= */ 0, /* run= */ true, /* logs= */ [], jobs, this.offset_);
+    this.offset_ += this.countLogLines(jobs);
+
+    const /* !Array<!Job> */ result =
+        await Runner.init().run('writeLogs', [job]);
+
+    return result[0].getJobs();
+  }
+
+  /**
+   * Counts the number of log lines in the given jobs.
+   *
+   * @param {!Array<!Job>} jobs The jobs to use
+   * @return {number} The number of log lines in the given jobs
+   */
+  countLogLines(jobs) {
+    let result = 0;
+    jobs.forEach((job) =>  {
+      result += job.getLogs().length;
+    });
+
+    return result;
+  }
+
+  /**
+   * Returns the offset.
+   *
+   * @return {number} The offset
+   */
+  getOffset() {
+    return this.offset_;
+  }
+
+}
+
+</script>

@@ -1,0 +1,111 @@
+<!--
+ Copyright 2021 Google LLC
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<!-->
+Utility file to enable multi-select for drop-down cells in Google Sheets.
+Adapted from https://gist.github.com/coinsandsteeldev/4c67dfa5411e8add913273fc5a30f5e7
+<-->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Multi-Select Dialog</title>
+    <style>
+      div.app-control {
+        position:fixed;
+        padding-top: 10px;
+        background-color: white;
+        height: 30px;
+        width: 100%;
+        top: 0;
+      }
+      div.app-form {
+        font-family: sans-serif;
+        padding-top: 30px;
+      }
+      span.checkbox-content {
+        font-size: 14px;
+      }
+    </style>
+    <script>
+      let data;
+      const formId = 'form';
+
+      function buildForm() {
+        if (!data) {
+          return;
+        }
+        const outputEl = document.getElementById(formId);
+        let output = '';
+
+        if (Object.prototype.toString.call(data) === '[object Array]') {
+          for (let i = 0; i < data.length; i++) {
+            if (data[i] == '') {
+              continue;
+            }
+            let val;
+            let checked = false;
+
+            if (typeof data[i] === 'object') {
+              val = data[i].val;
+              checked = data[i].checked;
+            } else {
+              val = data[i];
+            }
+            output += `<input type='checkbox' name='${val}' value='${val}'`;
+
+            if (checked) {
+              output += ` checked='${checked}'`;
+            }
+            output += '>';
+            output += `<span class='checkbox-content'>${val}</span>`;
+            output += '<br>';
+          }
+        } else {
+          output +=
+            '<p>This cell has no <a href="https://support.google.com/drive/answer/139705?hl=en">' +
+            'Data validation</a>.</p>';
+        }
+        outputEl.innerHTML = output;
+      }
+
+      google.script.run.withSuccessHandler((result) => {
+        data = result;
+        buildForm();
+      }).getSidebarContent();
+
+      function set() {
+        google.script.run.withSuccessHandler((x) => {})
+          .fillSelectedCell(document.getElementById(formId));
+      }
+
+      function reset() {
+        buildForm();
+      }
+    </script>
+  </head>
+  <body>
+    <div class="app-control">
+      <input type="button" value="Set" onclick="set();" />
+      <input type="button" value="Reset" onclick="reset();" />
+      <input type="button" value="Refresh" onclick="google.script.run.showMultiSelectSidebar();" />
+    </div>
+    <div class="app-form">
+      <form id="form" name="form">
+      </form>
+    </div>
+  </body>
+<html>
