@@ -68,4 +68,10 @@ const CONFIG = {
     row: 2,
     col: 1,
   },
+  advertisers: {
+    sheetName: 'advertisers',
+    row: 2,
+    col: 1,
+    maxResultsPerPage: 100,
+  },
 };

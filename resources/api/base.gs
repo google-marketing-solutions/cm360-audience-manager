@@ -50,9 +50,8 @@ class BaseApi {
    *
    * @param {string} requestUri The URI of the GET request
    * @param {?Object} requestParams The options to use for the GET request
-   * @param {function(*, number): undefined} requestCallback The method to call
-   *     after the request has executed successfully, passing the variable
-   *     number of fetched pages to it
+   * @param {function(!Object): undefined} requestCallback The method to call
+   *     after the request has executed successfully
    * @param {number=} maxPages The max number of pages to fetch. Defaults to -1
    *     indicating 'fetch all'
    */
@@ -66,11 +65,11 @@ class BaseApi {
     do {
       const result = this.executeApiRequest(url, params, true);
       console.log(`Output results page: ${pageCount}`);
-      this.handleResponse(result, requestCallback, pageCount);
+      this.handleResponse(result, requestCallback);
 
-      pageToken = result['nextPageToken'];
+      pageToken = result.nextPageToken;
 
-      if (pageToken !== 'undefined') {
+      if (pageToken) {
         url = UriUtil.modifyUrlQueryString(url, 'pageToken', pageToken);
       }
       pageCount++;
@@ -87,7 +86,7 @@ class BaseApi {
    * @param {boolean} retryOnFailure Whether the operation should be retried
    *     in case of failure or not
    * @param {number=} operationCount The number of failed attempts made.
-   * @return {*} The parsed JSON response data, or an empty object for
+   * @return {!Object} The parsed JSON response data, or an empty object for
    *     empty responses
    */
   executeApiRequest(
@@ -99,9 +98,9 @@ class BaseApi {
     try {
       console.log(`Fetching url=${url} with params=${JSON.stringify(params)}`);
       const response = UrlFetchApp.fetch(url, params);
-
-      return response.getContentText() ?
+      const result = response.getContentText() ?
           JSON.parse(response.getContentText()) : {};
+      return result;
     } catch (e) {
       console.error(`Operation failed with exception: ${e}`);
 
@@ -166,12 +165,11 @@ class BaseApi {
    * Wrapper method for triggering the given callback method, passing in
    * callbackParams along with the parsed API response.
    *
-   * @param {*} response The parsed API response data
-   * @param {function(*, number): undefined} callback The method to trigger
-   * @param {number} pageNumber The page number of data that was fetched
+   * @param {!Object} response The parsed API response data
+   * @param {function(!Object): undefined} callback The method to trigger
    */
-  handleResponse(response, callback, pageNumber) {
-    callback(response, pageNumber);
+  handleResponse(response, callback) {
+    callback(response);
   }
 
   /**

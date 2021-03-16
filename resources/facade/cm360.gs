@@ -111,6 +111,23 @@ class CampaignManagerFacade {
   }
 
   /**
+   * Retrieves Advertisers belonging to the given CM360 Network using the given
+   * thresholding parameters, triggering 'callback' for every fetched 'page' of
+   * data.
+   *
+   * @param {number} maxResultsPerPage The maximum number of results to fetch
+   *     per page
+   * @param {function(!Object): undefined} callback The callback to trigger
+   *     after fetching every 'page' of results
+   */
+  getAdvertisers(maxResultsPerPage, callback) {
+    const profileId = this.getUserProfileId();
+
+    this.getCampaignManager()
+        .getAdvertisers(profileId, maxResultsPerPage, callback);
+  }
+
+  /**
    * Returns the initialized Campaign Manager Service/API reference.
    *
    * @return {!CampaignManagerApi|!CampaignManagerService} The service/API

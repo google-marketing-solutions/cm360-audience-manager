@@ -90,6 +90,35 @@ class CampaignManagerService {
   }
 
   /**
+   * Retrieves Advertisers belonging to the given CM360 Network using the given
+   * thresholding parameters, triggering 'callback' for every fetched 'page' of
+   * data.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {number} maxResultsPerPage The maximum number of results to fetch
+   *     per page
+   * @param {function(!Object): undefined} callback The callback to trigger
+   *     after fetching every 'page' of results
+   * @param {number=} maxPages Optional number to limit number of 'pages' to
+   *     fetch. Used primarily for testing and defaults to -1 (fetch all)
+   */
+  getAdvertisers(profileId, maxResultsPerPage, callback, maxPages = -1) {
+    let pageCount = 1;
+    let pageToken;
+
+    do {
+      const result = this.getService().Advertisers.list(profileId, {
+        maxResults: maxResultsPerPage,
+        pageToken: pageToken,
+        sortField: 'NAME',
+      });
+      callback(result);
+      pageToken = result.nextPageToken;
+      pageCount++;
+    } while (pageToken && (maxPages < 0 || pageCount <= maxPages));
+  }
+
+  /**
    * Returns the CampaignManager service reference.
    *
    * @return {!Object} The service reference

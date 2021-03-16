@@ -199,6 +199,22 @@ class SheetsService {
   }
 
   /**
+   * Appends the given values after any existing data in the specified sheet.
+   *
+   * @param {string} sheetName The name of the sheet
+   * @param {number} row The range's start row - used only when the associated
+   *     sheet is empty (i.e. sheet.getLastRow returns 0)
+   * @param {number} col The range's start col
+   * @param {?Array<?Array<?Object>>} values The values to append
+   */
+  appendToDefinedRange(sheetName, row, col, values) {
+    const sheet = this.getSpreadsheet().getSheetByName(sheetName);
+    const startRow = sheet.getLastRow() || row;
+    sheet.getRange(startRow, col, values.length, values[0].length)
+        .setValues(values);
+  }
+
+  /**
    * Returns the initialized {@link SpreadsheetApp.Spreadsheet} reference.
    *
    * @return {?SpreadsheetApp.Spreadsheet} The spreadsheet

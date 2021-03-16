@@ -103,6 +103,11 @@ function getFloodlights() {
   getAudiencesController().fetchAndOutputFloodlightActivities();
 }
 
+/** Retrieves advertisers from the logged in user's CM360 account. */
+function getAdvertisers() {
+  getAudiencesController().fetchAndOutputAdvertisers();
+}
+
 /**
  * Returns the SheetsService instance, initializing it if it does not exist yet.
  *

@@ -45,14 +45,16 @@ class AudiencesController {
    * Retrieves user defined variable configurations for the logged in user and
    * CM360 Network and writes them to the associated sheet.
    *
-   * @param {string=} sheetName The name of the sheet to use
-   * @param {number=} row The start row to write data at
-   * @param {number=} col The start col to write data at
+   * @param {{
+   *     sheetName: string,
+   *     row: number,
+   *     col: number,
+   * }=} params
    */
-  fetchAndOutputCustomVariables(
+  fetchAndOutputCustomVariables({
       sheetName = CONFIG.customVariables.sheetName,
       row = CONFIG.customVariables.row,
-      col = CONFIG.customVariables.col) {
+      col = CONFIG.customVariables.col} = {}) {
     this.getSheetsService().clearDefinedRange(sheetName, row, col);
 
     const data = this.getCampaignManagerService()
@@ -67,14 +69,16 @@ class AudiencesController {
    * Retrieves configured floodlight activities from the logged in user's
    * CM360 Network and Advertiser, and writes them to the associated sheet.
    *
-   * @param {string=} sheetName The name of the sheet to use
-   * @param {number=} row The start row to write data at
-   * @param {number=} col The start col to write data at
+   * @param {{
+   *     sheetName: string,
+   *     row: number,
+   *     col: number,
+   * }=} params
    */
-  fetchAndOutputFloodlightActivities(
+  fetchAndOutputFloodlightActivities({
       sheetName = CONFIG.floodlights.sheetName,
       row = CONFIG.floodlights.row,
-      col = CONFIG.floodlights.col) {
+      col = CONFIG.floodlights.col} = {}) {
     this.getSheetsService().clearDefinedRange(sheetName, row, col);
 
     const data = this.getCampaignManagerService()
@@ -86,6 +90,57 @@ class AudiencesController {
     ]) : [[]];
     this.getSheetsService()
         .setValuesInDefinedRange(sheetName, row, col, output);
+  }
+
+  /**
+   * Retrieves Advertisers belonging to the given CM360 Network and writes them
+   * to the associated sheet through a callback that is called once per fetched
+   * 'page' of data.
+   *
+   * @param {{
+   *     sheetName: string,
+   *     row: number,
+   *     col: number,
+   *     maxResultsPerPage: number,
+   * }=} params
+   */
+  fetchAndOutputAdvertisers({
+      sheetName = CONFIG.advertisers.sheetName,
+      row = CONFIG.advertisers.row,
+      col = CONFIG.advertisers.col,
+      maxResultsPerPage = CONFIG.advertisers.maxResultsPerPage} = {}) {
+    this.getSheetsService().clearDefinedRange(sheetName, row, col);
+
+    const callback = (data) => {
+      this.outputAdvertisers(data);
+    };
+
+    this.getCampaignManagerService()
+        .getAdvertisers(maxResultsPerPage, callback);
+  }
+
+  /**
+   * Delegates to {@link SheetsService} to write the given data to the
+   * associated spreadsheet. Used as a callback within
+   * {@link #fetchAndOutputAdvertisers}.
+   *
+   * @param {{advertisers: !Array<!Object>, nextPageToken: string}} data The
+   *     data to write
+   * @param {string=} sheetName The name of the sheet to use
+   * @param {number=} row The start row to write data at
+   * @param {number=} col The start col to write data at
+   */
+  outputAdvertisers(
+      data,
+      sheetName = CONFIG.advertisers.sheetName,
+      row = CONFIG.advertisers.row,
+      col = CONFIG.advertisers.col) {
+    const output = data.advertisers.length !== 0 ?
+        data.advertisers.map((advertiser) => [
+          advertiser.id,
+          `${advertiser.name} (${advertiser.id})`,
+        ]) : [[]];
+    this.getSheetsService().appendToDefinedRange(sheetName, row, col, output);
   }
 
   /**

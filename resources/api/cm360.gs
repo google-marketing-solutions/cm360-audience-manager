@@ -91,6 +91,27 @@ class CampaignManagerApi extends BaseApi {
   }
 
   /**
+   * Retrieves Advertisers belonging to the given CM360 Network using the given
+   * thresholding parameters, triggering 'callback' for every fetched 'page' of
+   * data.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {number} maxResultsPerPage The maximum number of results to fetch
+   *     per page
+   * @param {function(!Object): undefined} callback The callback to trigger
+   *     after fetching every 'page' of results
+   */
+  getAdvertisers(profileId, maxResultsPerPage, callback) {
+    const path = `userprofiles/${profileId}/advertisers?sortField=Name` +
+        `&maxResults=${maxResultsPerPage}`;
+
+    this.executePagedApiRequest(
+        /* requestUri= */ path,
+        /* requestParams= */ {method: 'get'},
+        /* requestCallback= */ callback);
+  }
+
+  /**
    * Returns the CM360 account data.
    *
    * @return {{cmNetwork: string, advertiserId: string}} The CM360 account data
