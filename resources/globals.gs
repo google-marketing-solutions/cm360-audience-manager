@@ -46,7 +46,6 @@ const CONFIG = {
   multiSelect: {
     separator: '#|#',
     modificationStatus: {
-      enabled: true,
       column: 9,
       values: {
         read: 'READ',
@@ -73,5 +72,14 @@ const CONFIG = {
     row: 2,
     col: 1,
     maxResultsPerPage: 100,
+    defaultName: 'MISSING',
+  },
+  audiences: {
+    create: {},
+    update: {
+      sheetName: 'Update Audiences',
+      row: 3,
+      col: 1,
+    },
   },
 };

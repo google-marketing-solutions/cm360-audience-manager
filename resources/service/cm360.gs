@@ -119,6 +119,39 @@ class CampaignManagerService {
   }
 
   /**
+   * Retrieves configured remarketing lists from the logged in user's CM360
+   * Network and Advertiser.
+   *
+   * @param {string} profileId The user profile ID
+   * @return {!Array<!Object>} The remarketing lists array
+   */
+  getRemarketingLists(profileId) {
+    return this.getService()
+        .RemarketingLists
+        .list(
+            profileId,
+            this.getAccountData().advertiserId,
+            {accountId: this.getAccountData().cmNetwork})
+        .remarketingLists;
+  }
+
+  /**
+   * Retrieves configured remarketing list shares for the given remarketing list
+   * ID from the logged in user's CM360 Network and Advertiser.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {string} remarketingListId The ID of the remarketing list. Used for
+   *     retrieving advertiser IDs that the remarketing list is shared with
+   * @return {!Array<string>} The remarketing list shares array
+   */
+  getRemarketingListShares(profileId, remarketingListId) {
+    return this.getService()
+        .RemarketingListShares
+        .get(profileId, remarketingListId)
+        .sharedAdvertiserIds;
+  }
+
+  /**
    * Returns the CampaignManager service reference.
    *
    * @return {!Object} The service reference

@@ -126,21 +126,141 @@ class AudiencesController {
    *
    * @param {{advertisers: !Array<!Object>, nextPageToken: string}} data The
    *     data to write
-   * @param {string=} sheetName The name of the sheet to use
-   * @param {number=} row The start row to write data at
-   * @param {number=} col The start col to write data at
+   * @param {{
+   *     sheetName: string,
+   *     row: number,
+   *     col: number,
+   * }=} params
    */
-  outputAdvertisers(
-      data,
+  outputAdvertisers(data, {
       sheetName = CONFIG.advertisers.sheetName,
       row = CONFIG.advertisers.row,
-      col = CONFIG.advertisers.col) {
+      col = CONFIG.advertisers.col} = {}) {
     const output = data.advertisers.length !== 0 ?
         data.advertisers.map((advertiser) => [
           advertiser.id,
           `${advertiser.name} (${advertiser.id})`,
         ]) : [[]];
     this.getSheetsService().appendToDefinedRange(sheetName, row, col, output);
+  }
+
+  /**
+   * Retrieves Remarketing Lists belonging to the given Advertiser and CM360
+   * Network and writes them to the associated sheet.
+   *
+   * @param {{
+   *     sheetName: string,
+   *     row: number,
+   *     col: number,
+   * }=} params
+   */
+  fetchAndOutputRemarketingLists({
+      sheetName = CONFIG.audiences.update.sheetName,
+      row = CONFIG.audiences.update.row,
+      col = CONFIG.audiences.update.col} = {}) {
+    this.getSheetsService().showToast(
+        /* message= */ 'Fetching audiences...',
+        /* title= */ 'Update - BEGIN');
+
+    const remarketingLists = this.getCampaignManagerService()
+        .getRemarketingLists();
+    const filteredRemarketingLists = remarketingLists
+        .filter((remarketingList) => remarketingList.listPopulationRule);
+
+    const output = filteredRemarketingLists.length !== 0 ?
+        filteredRemarketingLists.map((list) =>
+          this.prepareRemarketingList(list)) :
+        [[]];
+
+    this.getSheetsService().clearDefinedRange(sheetName, row, col);
+    this.getSheetsService()
+        .setValuesInDefinedRange(sheetName, row, col, output);
+    this.getSheetsService().showToast(
+        /* message= */ 'Audiences fetched successfully!',
+        /* title= */ 'Update - END',
+        /* timeoutSeconds= */ 5);
+  }
+
+  /**
+   * Retrieves Remarketing List Shares for the given remarketing list using
+   * {@link #getRemarketingListShares} and prepares the ouput as it should
+   * appear in the associated sheet. This method is used as a mapping function
+   * for every element of the retrieved Remarketing Lists array in
+   * {@link #fetchAndOutputRemarketingLists}.
+   *
+   * @param {!Object} remarketingList The remarketingList object
+   * @param {string=} status The default status to set per remarketing list
+   * @return {!Array<string>} The prepared remarketing list row to output in
+   *     the associated sheet
+   */
+  prepareRemarketingList(
+      remarketingList,
+      status = CONFIG.multiSelect.modificationStatus.values.read) {
+    const remarketingListShares =
+        this.getRemarketingListShares(remarketingList.id);
+
+    return [
+      remarketingList.id,
+      remarketingList.name,
+      remarketingList.name,
+      remarketingList.description,
+      JSON.stringify(remarketingList.listPopulationRule),
+      remarketingList.lifeSpan,
+      remarketingList.listSize,
+      remarketingListShares,
+      status,
+    ];
+  }
+
+  /**
+   * Retrieves Remarketing List Shares, which are advertisers Ids that the
+   * associated remarketing list is allowed to be shared with, and formats them
+   * according to how they should appear in the associated sheet.
+   *
+   * @param {string} remarketingListId The remarketing list ID
+   * @param {string=} separator The separator to join the retrieved IDs with
+   * @return {string} A string representing the joined retrieved IDs, or an
+   *     empty string if no IDs were retrieved
+   */
+  getRemarketingListShares(
+      remarketingListId,
+      separator = CONFIG.multiSelect.separator) {
+    const remarketingListShares = this.getCampaignManagerService()
+        .getRemarketingListShares(remarketingListId);
+    let output = '';
+
+    if (remarketingListShares.length !== 0) {
+      const result = remarketingListShares.map((advertiserId) =>
+        this.resolveAdvertiserById(advertiserId));
+      result.sort();
+      output = result.join(separator);
+    }
+    return output;
+  }
+
+  /**
+   * Resolves an advertiser ID to its associated name by reading the ID - Name
+   * mappings from the underlying spreadsheet and filtering for the given ID.
+   *
+   * @param {string} advertiserId The advertiserId to resolve
+   * @param {{
+   *     sheetName: string,
+   *     row: number,
+   *     col: number,
+   *     defaultName: string,
+   * }=} params
+   * @return {string} The name of the matched advertiser
+   */
+  resolveAdvertiserById(advertiserId, {
+      sheetName = CONFIG.advertisers.sheetName,
+      row = CONFIG.advertisers.row,
+      col = CONFIG.advertisers.col,
+      defaultName = CONFIG.advertisers.defaultName} = {}) {
+    const data = this.getSheetsService().getRangeData(sheetName, row, col);
+    const result = data
+        .filter((mapping) => String(mapping[0]) === advertiserId);
+
+    return result.length === 0 ? defaultName : String(result[0][1]);
   }
 
   /**

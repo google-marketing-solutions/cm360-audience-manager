@@ -96,6 +96,17 @@ class SheetsService {
   }
 
   /**
+   * Shows a 'toast' card on Google Sheets with the given parameters.
+   *
+   * @param {string} message The message to print on the toast card
+   * @param {string} title The title to print above the message
+   * @param {number=} timeoutSeconds Optional timeout in seconds
+   */
+  showToast(message, title, timeoutSeconds = 3) {
+    this.getSpreadsheet().toast(message, title, timeoutSeconds);
+  }
+
+  /**
    * Retrieves the current selected range from the associated Google Sheets
    * spreadsheet.
    *
@@ -212,6 +223,21 @@ class SheetsService {
     const startRow = sheet.getLastRow() || row;
     sheet.getRange(startRow, col, values.length, values[0].length)
         .setValues(values);
+  }
+
+  /**
+   * Retrieves data from the underlying spreadsheet using the provided range
+   * parameters and sheet name.
+   *
+   * @param {string} sheetName The name of the sheet
+   * @param {number} row The range's start row
+   * @param {number} col The range's start col
+   * @return {?Array<?Array<?Object>>} The data found at the specified range
+   */
+  getRangeData(sheetName, row, col) {
+    const sheet = this.getSpreadsheet().getSheetByName(sheetName);
+    return sheet.getRange(row, col, sheet.getLastRow(), sheet.getLastColumn())
+        .getValues();
   }
 
   /**

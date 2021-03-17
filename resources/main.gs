@@ -109,6 +109,13 @@ function getAdvertisers() {
 }
 
 /**
+ * Retrieves configured audience lists from the logged in user's account.
+ */
+function getAudiences() {
+  getAudiencesController().fetchAndOutputRemarketingLists();
+}
+
+/**
  * Returns the SheetsService instance, initializing it if it does not exist yet.
  *
  * @return {!SheetsService} The initialized SheetsService instance

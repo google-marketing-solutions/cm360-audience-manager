@@ -128,6 +128,34 @@ class CampaignManagerFacade {
   }
 
   /**
+   * Retrieves configured remarketing lists from the logged in user's
+   * CM360 Network and Advertiser.
+   *
+   * @return {!Array<!Object>} The remarketing lists array
+   */
+  getRemarketingLists() {
+    const profileId = this.getUserProfileId();
+
+    return this.getCampaignManager()
+        .getRemarketingLists(profileId);
+  }
+
+  /**
+   * Retrieves configured remarketing list shares for the given remarketing list
+   * ID from the logged in user's CM360 Network and Advertiser.
+   *
+   * @param {string} remarketingListId The ID of the remarketing list. Used for
+   *     retrieving advertiser IDs that the remarketing list is shared with
+   * @return {!Array<string>} The remarketing list shares array
+   */
+  getRemarketingListShares(remarketingListId) {
+    const profileId = this.getUserProfileId();
+
+    return this.getCampaignManager()
+        .getRemarketingListShares(profileId, remarketingListId);
+  }
+
+  /**
    * Returns the initialized Campaign Manager Service/API reference.
    *
    * @return {!CampaignManagerApi|!CampaignManagerService} The service/API

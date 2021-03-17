@@ -112,6 +112,42 @@ class CampaignManagerApi extends BaseApi {
   }
 
   /**
+   * Retrieves configured remarketing lists from the logged in user's CM360
+   * Network and Advertiser.
+   *
+   * @param {string} profileId The user profile ID
+   * @return {!Array<!Object>} The remarketing lists array
+   */
+  getRemarketingLists(profileId) {
+    const path = `userprofiles/${profileId}/remarketingLists` +
+        `?advertiserId=${this.getAccountData().advertiserId}`;
+
+    return this.executeApiRequest(
+        /* requestUri= */ path,
+        /* requestParams= */ {method: 'get'},
+        /* retryOnFailure= */ true)['remarketingLists'];
+  }
+
+  /**
+   * Retrieves configured remarketing list shares for the given remarketing list
+   * ID from the logged in user's CM360 Network and Advertiser.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {string} remarketingListId The ID of the remarketing list. Used for
+   *     retrieving advertiser IDs that the remarketing list is shared with
+   * @return {!Array<string>} The remarketing list shares array
+   */
+  getRemarketingListShares(profileId, remarketingListId) {
+    const path = `userprofiles/${profileId}/remarketingListShares/` +
+        remarketingListId;
+
+    return this.executeApiRequest(
+        /* requestUri= */ path,
+        /* requestParams= */ {method: 'get'},
+        /* retryOnFailure= */ true)['sharedAdvertiserIds'];
+  }
+
+  /**
    * Returns the CM360 account data.
    *
    * @return {{cmNetwork: string, advertiserId: string}} The CM360 account data
