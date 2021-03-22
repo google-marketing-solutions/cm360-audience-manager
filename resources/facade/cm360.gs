@@ -34,7 +34,7 @@ class CampaignManagerFacade {
   /**
    * @constructs an instance of CampaignManagerFacade.
    *
-   * @param {{cmNetwork: string, advertiserId: string}} accountData The CM360
+   * @param {{networkId: string, advertiserId: string}} accountData The CM360
    *     account data
    * @param {boolean} apiFirst Whether to access the API directly or not
    * @param {?Object=} campaignManagerServiceWrapper A wrapper for the built-in
@@ -42,7 +42,7 @@ class CampaignManagerFacade {
    */
   constructor(
       accountData, apiFirst, campaignManagerServiceWrapper = undefined) {
-    /** @private @const {{cmNetwork: string, advertiserId: string}} */
+    /** @private @const {{networkId: string, advertiserId: string}} */
     this.accountData_ = accountData;
 
     /** @private @const {boolean} */
@@ -63,13 +63,13 @@ class CampaignManagerFacade {
    *     CM360 Network
    */
   getUserProfileId() {
-    const cmNetwork = this.getAccountData().cmNetwork;
+    const networkId = this.getAccountData().networkId;
     const userProfiles = this.getCampaignManager().getUserProfiles();
     let userProfileId = '';
 
     if (userProfiles) {
       const filteredUserProfiles = userProfiles.filter(
-          (userProfile) => userProfile.accountId === cmNetwork.toString());
+          (userProfile) => userProfile.accountId === networkId.toString());
 
       if (filteredUserProfiles && filteredUserProfiles[0]) {
         userProfileId = filteredUserProfiles[0].profileId;
@@ -78,7 +78,7 @@ class CampaignManagerFacade {
     if (!userProfileId) {
       throw new Error(
           `Could not find a User Profile assciated with the given CM360 ` +
-          `Network: ${cmNetwork}! Please create a User Profile using the ` +
+          `Network: ${networkId}! Please create a User Profile using the ` +
           `CM360 UI before retrying this operation.`);
     }
     return userProfileId;
@@ -141,18 +141,61 @@ class CampaignManagerFacade {
   }
 
   /**
+   * Updates a remarketing list using the given resource parameter.
+   *
+   * @param {!Object} remarketingListResource The remarketing list resource
+   */
+  updateRemarketingList(remarketingListResource) {
+    const profileId = this.getUserProfileId();
+
+    this.getCampaignManager()
+        .updateRemarketingList(profileId, remarketingListResource);
+  }
+
+  /**
    * Retrieves configured remarketing list shares for the given remarketing list
    * ID from the logged in user's CM360 Network and Advertiser.
    *
    * @param {string} remarketingListId The ID of the remarketing list. Used for
    *     retrieving advertiser IDs that the remarketing list is shared with
-   * @return {!Array<string>} The remarketing list shares array
+   * @return {!Object} The remarketing list shares resource
+   */
+  getRemarketingListSharesResource(remarketingListId) {
+    const profileId = this.getUserProfileId();
+
+    return this.getCampaignManager()
+        .getRemarketingListSharesResource(profileId, remarketingListId);
+  }
+
+  /**
+   * Retrieves configured remarketing list shared advertiser IDs for the given
+   * remarketing list ID from the logged in user's CM360 Network and Advertiser.
+   *
+   * @param {string} remarketingListId The ID of the remarketing list. Used for
+   *     retrieving advertiser IDs that the remarketing list is shared with
+   * @return {!Array<string>} The remarketing list shared advertiser IDs array
    */
   getRemarketingListShares(remarketingListId) {
     const profileId = this.getUserProfileId();
 
     return this.getCampaignManager()
         .getRemarketingListShares(profileId, remarketingListId);
+  }
+
+  /**
+   * Updates a remarketing list's 'shares' using the given resource parameter.
+   *
+   * @param {string} remarketingListId The ID of the remarketing list to update
+   *     'shares' for
+   * @param {!Object} remarketingListSharesResource The remarketing list shares
+   *     resource
+   */
+  updateRemarketingListShares(
+      remarketingListId, remarketingListSharesResource) {
+    const profileId = this.getUserProfileId();
+
+    this.getCampaignManager().updateRemarketingListShares(
+        profileId, remarketingListId, remarketingListSharesResource);
   }
 
   /**
@@ -167,7 +210,7 @@ class CampaignManagerFacade {
   /**
    * Returns the CM360 account data.
    *
-   * @return {{cmNetwork: string, advertiserId: string}} The CM360 account data
+   * @return {{networkId: string, advertiserId: string}} The CM360 account data
    */
   getAccountData() {
     return this.accountData_;

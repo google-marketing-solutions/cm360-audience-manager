@@ -33,13 +33,13 @@ class CampaignManagerApi extends BaseApi {
   /**
    * @constructs an instance of CampaignManagerApi.
    *
-   * @param {{cmNetwork: string, advertiserId: string}} accountData The CM360
+   * @param {{networkId: string, advertiserId: string}} accountData The CM360
    *     account data
    */
   constructor(accountData) {
     super(API_SCOPE, API_VERSION);
 
-    /** @private @const {{cmNetwork: string, advertiserId: string}} */
+    /** @private @const {{networkId: string, advertiserId: string}} */
     this.accountData_ = accountData;
   }
 
@@ -129,28 +129,85 @@ class CampaignManagerApi extends BaseApi {
   }
 
   /**
+   * Updates a remarketing list using the given resource parameter and user
+   * profile ID.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {!Object} remarketingListResource The remarketing list resource
+   */
+  updateRemarketingList(profileId, remarketingListResource) {
+    const path = `userprofiles/${profileId}/remarketingLists`;
+
+    this.executeApiRequest(
+        /* requestUri= */ path,
+        /* requestParams= */ {
+          method: 'put',
+          payload: JSON.stringify(remarketingListResource),
+        },
+        /* retryOnFailure= */ true);
+  }
+
+  /**
    * Retrieves configured remarketing list shares for the given remarketing list
    * ID from the logged in user's CM360 Network and Advertiser.
    *
    * @param {string} profileId The user profile ID
    * @param {string} remarketingListId The ID of the remarketing list. Used for
    *     retrieving advertiser IDs that the remarketing list is shared with
-   * @return {!Array<string>} The remarketing list shares array
+   * @return {!Object} The remarketing list shares resource
    */
-  getRemarketingListShares(profileId, remarketingListId) {
+  getRemarketingListSharesResource(profileId, remarketingListId) {
     const path = `userprofiles/${profileId}/remarketingListShares/` +
         remarketingListId;
 
     return this.executeApiRequest(
         /* requestUri= */ path,
         /* requestParams= */ {method: 'get'},
-        /* retryOnFailure= */ true)['sharedAdvertiserIds'];
+        /* retryOnFailure= */ true);
+  }
+
+  /**
+   * Retrieves configured remarketing list shared advertiser IDs for the given
+   * remarketing list ID from the logged in user's CM360 Network and Advertiser.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {string} remarketingListId The ID of the remarketing list. Used for
+   *     retrieving advertiser IDs that the remarketing list is shared with
+   * @return {!Array<string>} The remarketing list shared advertiser IDs array
+   */
+  getRemarketingListShares(profileId, remarketingListId) {
+    return this.getRemarketingListSharesResource(profileId, remarketingListId)
+        ['sharedAdvertiserIds'];
+  }
+
+  /**
+   * Updates a remarketing list's 'shares' using the given resource parameter,
+   * remarketing list ID and user profile ID.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {string} remarketingListId The ID of the remarketing list to update
+   *     'shares' for
+   * @param {!Object} remarketingListSharesResource The remarketing list shares
+   *     resource
+   */
+  updateRemarketingListShares(
+      profileId, remarketingListId, remarketingListSharesResource) {
+    const path = `userprofiles/${profileId}/remarketingListShares?` +
+        `id=${remarketingListId}`;
+
+    this.executeApiRequest(
+        /* requestUri= */ path,
+        /* requestParams= */ {
+          method: 'patch',
+          payload: JSON.stringify(remarketingListSharesResource),
+        },
+        /* retryOnFailure= */ true);
   }
 
   /**
    * Returns the CM360 account data.
    *
-   * @return {{cmNetwork: string, advertiserId: string}} The CM360 account data
+   * @return {{networkId: string, advertiserId: string}} The CM360 account data
    */
   getAccountData() {
     return this.accountData_;

@@ -43,7 +43,7 @@ class UriUtil {
     }
     for (const key in extension) {
       if (extension.hasOwnProperty(key)) {
-        if (extension[key] instanceof Array) {
+        if (extension[key] instanceof Array && original[key] instanceof Array) {
           extension[key].forEach((element) => original[key].push(element));
         } else {
           original[key] = extension[key];

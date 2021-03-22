@@ -31,13 +31,13 @@ class CampaignManagerService {
   /**
    * @constructs an instance of CampaignManagerService.
    *
-   * @param {{cmNetwork: string, advertiserId: string}} accountData The CM360
+   * @param {{networkId: string, advertiserId: string}} accountData The CM360
    *     account data
-   * @param {?Object=} campaignManagerServiceWrapper A wrapper for the
-   *     CampaignManager service to facilitate testing
+   * @param {?Object=} campaignManagerServiceWrapper A wrapper for the built-in
+   *     'CampaignManager' service to facilitate testing by passing a mock
    */
   constructor(accountData, campaignManagerServiceWrapper = undefined) {
-    /** @private @const {{cmNetwork: string, advertiserId: string}} */
+    /** @private @const {{networkId: string, advertiserId: string}} */
     this.accountData_ = accountData;
 
     /** @private @const {!Object} */
@@ -69,8 +69,8 @@ class CampaignManagerService {
         .get(
             profileId,
             this.getAccountData().advertiserId,
-            {accountId: this.getAccountData().cmNetwork})
-        .userDefinedVariableConfigurations;
+            {accountId: this.getAccountData().networkId})
+        ['userDefinedVariableConfigurations'];
   }
 
   /**
@@ -86,7 +86,7 @@ class CampaignManagerService {
         .list(
             profileId,
             {advertiserId: this.getAccountData().advertiserId})
-        .floodlightActivities;
+        ['floodlightActivities'];
   }
 
   /**
@@ -131,8 +131,25 @@ class CampaignManagerService {
         .list(
             profileId,
             this.getAccountData().advertiserId,
-            {accountId: this.getAccountData().cmNetwork})
-        .remarketingLists;
+            {accountId: this.getAccountData().networkId})
+        ['remarketingLists'];
+  }
+
+  /**
+   * Updates a remarketing list using the given resource parameter and user
+   * profile ID.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {!Object} remarketingListResource The remarketing list resource
+   */
+  updateRemarketingList(profileId, remarketingListResource) {
+    this.getService()
+        .RemarketingLists
+        .update(
+            remarketingListResource,
+            profileId,
+            this.getAccountData().advertiserId,
+            {accountId: this.getAccountData().networkId});
   }
 
   /**
@@ -142,13 +159,42 @@ class CampaignManagerService {
    * @param {string} profileId The user profile ID
    * @param {string} remarketingListId The ID of the remarketing list. Used for
    *     retrieving advertiser IDs that the remarketing list is shared with
-   * @return {!Array<string>} The remarketing list shares array
+   * @return {!Object} The remarketing list shares resource
    */
-  getRemarketingListShares(profileId, remarketingListId) {
+  getRemarketingListSharesResource(profileId, remarketingListId) {
     return this.getService()
         .RemarketingListShares
-        .get(profileId, remarketingListId)
-        .sharedAdvertiserIds;
+        .get(profileId, remarketingListId);
+  }
+
+  /**
+   * Retrieves configured remarketing list shared advertiser IDs for the given
+   * remarketing list ID from the logged in user's CM360 Network and Advertiser.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {string} remarketingListId The ID of the remarketing list. Used for
+   *     retrieving advertiser IDs that the remarketing list is shared with
+   * @return {!Array<string>} The remarketing list shared advertiser IDs array
+   */
+  getRemarketingListShares(profileId, remarketingListId) {
+    return this.getRemarketingListSharesResource(profileId, remarketingListId)
+        ['sharedAdvertiserIds'];
+  }
+
+  /**
+   * Updates a remarketing list's 'shares' using the given resource parameter,
+   * remarketing list ID and user profile ID.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {string} remarketingListId The ID of the remarketing list to update
+   *     'shares' for
+   * @param {!Object} remarketingListSharesResource The remarketing list shares
+   *     resource
+   */
+  updateRemarketingListShares(
+      profileId, remarketingListId, remarketingListSharesResource) {
+    this.getService().RemarketingListShares.patch(
+        remarketingListSharesResource, profileId, remarketingListId);
   }
 
   /**
@@ -163,7 +209,7 @@ class CampaignManagerService {
   /**
    * Returns the CM360 account data.
    *
-   * @return {{cmNetwork: string, advertiserId: string}} The CM360 account data
+   * @return {{networkId: string, advertiserId: string}} The CM360 account data
    */
   getAccountData() {
     return this.accountData_;

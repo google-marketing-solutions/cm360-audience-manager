@@ -75,6 +75,7 @@ function createAudienceJob(json) {
 /**
  * Defines the 'updateAudiences' job.
  * @see jobs.html#updateAudiencesHandler
+ * @see main.js#updateAudiences
  *
  * @param {string} json A JSON representation of an object that contains an
  *     empty array that will be filled by the invoked method with single or
@@ -89,6 +90,7 @@ function updateAudiencesJob(json) {
 /**
  * Defines the 'updateAudience' job
  * @see jobs.html#updateAudiencesHandler
+ * @see main.js#updateAudience
  *
  * @param {string} json A JSON representation of an audience definition to
  *     update
@@ -101,6 +103,7 @@ function updateAudienceJob(json) {
 /**
  * Defines the 'updateAllAudiences' job.
  * @see jobs.html#updateAllAudiencesHandler
+ * @see main.js#updateAllAudiences
  *
  * @param {string} json A JSON representation of an object that contains an
  *     empty array that will be filled by the invoked method with all available

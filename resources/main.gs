@@ -69,21 +69,21 @@ function requestAccess() {
  * Retrieves client account configuration referenced in the associated Google
  * Sheets spreadsheet.
  *
- * @return {{cmNetwork: string, advertiserId: string}} A JS object containing
+ * @return {{networkId: string, advertiserId: string}} A JS object containing
  *     the CM360 Network and Advertiser ID
  */
 function getClientAccountConfiguration() {
-  const cmNetwork = getSheetsService().getCellValue(
+  const networkId = getSheetsService().getCellValue(
       CONFIG.accountData.sheetName,
-      CONFIG.accountData.cmNetwork.row,
-      CONFIG.accountData.cmNetwork.col);
+      CONFIG.accountData.networkId.row,
+      CONFIG.accountData.networkId.col);
   const advertiserId = getSheetsService().getCellValue(
       CONFIG.accountData.sheetName,
       CONFIG.accountData.advertiserId.row,
       CONFIG.accountData.advertiserId.col);
 
   return {
-    cmNetwork: cmNetwork.toString(),
+    networkId: networkId.toString(),
     advertiserId: advertiserId.toString(),
   };
 }

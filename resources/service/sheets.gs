@@ -78,7 +78,7 @@ class SheetsService {
    * @param {?string=} sheetName The name of the sheet to use. Uses the
    *     sheet the user currently has open (active sheet) if not given
    */
-  setCellValue(row, col, val, sheetName = undefined) {
+  setCellValue(row, col, val, sheetName = null) {
     const sheet = sheetName ?
         this.getSpreadsheet().getSheetByName(sheetName) :
         this.getSpreadsheet().getActiveSheet();
@@ -231,13 +231,20 @@ class SheetsService {
    *
    * @param {string} sheetName The name of the sheet
    * @param {number} row The range's start row
-   * @param {number} col The range's start col
+   * @param {number} col The range's start column
+   * @param {number=} numRows Optional number of rows to retrieve. Defaults to
+   *     all available rows
+   * @param {number=} numCols Optional number of columns to retrieve. Defaults
+   *     to all available columns
    * @return {?Array<?Array<?Object>>} The data found at the specified range
    */
-  getRangeData(sheetName, row, col) {
+  getRangeData(sheetName, row, col, numRows = 0, numCols = 0) {
     const sheet = this.getSpreadsheet().getSheetByName(sheetName);
-    return sheet.getRange(row, col, sheet.getLastRow(), sheet.getLastColumn())
-        .getValues();
+    return sheet.getRange(
+        row,
+        col,
+        numRows || sheet.getLastRow(),
+        numCols || sheet.getLastColumn()).getValues();
   }
 
   /**

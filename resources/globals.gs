@@ -34,7 +34,7 @@ const CONFIG = {
   apiFirst: false,
   accountData: {
     sheetName: 'Client Setup',
-    cmNetwork: {
+    networkId: {
       row: 2,
       col: 3,
     },
@@ -44,7 +44,8 @@ const CONFIG = {
     },
   },
   multiSelect: {
-    separator: '#|#',
+    separator: '##',
+    separatorRegex: '\\((\\d+)\\)#?#?',
     modificationStatus: {
       column: 9,
       values: {
@@ -80,6 +81,13 @@ const CONFIG = {
       sheetName: 'Update Audiences',
       row: 3,
       col: 1,
+      cols: {
+        id: 0,
+        name: 1,
+        newName: 2,
+        audienceListShares: 7,
+        status: 8,
+      },
     },
   },
 };
