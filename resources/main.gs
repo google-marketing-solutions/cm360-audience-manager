@@ -33,6 +33,9 @@ let campaignManagerService = null;
 /** @type {?AudiencesController} */
 let audiencesController = null;
 
+/** @type {?AudienceUpdateJobController} */
+let audienceUpdateJobController = null;
+
 /**
  * Creates a new menu in Google Sheets that contains different methods for
  * retrieving and updating Campaign Manager audience lists.
@@ -108,11 +111,44 @@ function getAdvertisers() {
   getAudiencesController().fetchAndOutputAdvertisers();
 }
 
-/**
- * Retrieves configured audience lists from the logged in user's account.
- */
+/** Retrieves configured audience lists from the logged in user's account. */
 function getAudiences() {
   getAudiencesController().fetchAndOutputRemarketingLists();
+}
+
+/**
+ * Identifies and updates audiences changed in the underlying spreadsheet.
+ * @see jobs.js#updateAudiencesJob
+ *
+ * @param {!Job} job The job instance passed by the jobs infrastructure
+ * @return {!Job} The modified job instance
+ */
+function updateAudiences(job) {
+  return getAudienceUpdateJobController().updateAudiences(job);
+}
+
+/**
+ * Updates all audience specified in the underlying spreadsheet.
+ * @see jobs.js#updateAllAudiencesJob
+ *
+ * @param {!Job} job The job instance passed by the jobs infrastructure
+ * @return {!Job} The modified job instance
+ */
+function updateAllAudiences(job) {
+  return getAudienceUpdateJobController()
+      .updateAudiences(job, /* updateAll= */ true);
+}
+
+/**
+ * Updates a single audience. Triggered once for every changed audience from
+ * {@link #updateAudiences} or {@link #updateAllAudiences}.
+ * @see jobs.js#updateAudienceJob
+ *
+ * @param {!AudienceUpdateJob} job The job instance passed by the jobs infrastructure
+ * @return {!AudienceUpdateJob} The job instance
+ */
+function updateAudience(job) {
+  return getAudienceUpdateJobController().updateAudience(job);
 }
 
 /**
@@ -121,7 +157,7 @@ function getAudiences() {
  * @return {!SheetsService} The initialized SheetsService instance
  */
 function getSheetsService() {
-  if (!sheetsService) {
+  if (sheetsService == null) {
     sheetsService = new SheetsService();
   }
   return sheetsService;
@@ -135,7 +171,7 @@ function getSheetsService() {
  *     instance
  */
 function getCampaignManagerService() {
-  if (!campaignManagerService) {
+  if (campaignManagerService == null) {
     campaignManagerService = new CampaignManagerFacade(
         getClientAccountConfiguration(),
         CONFIG.apiFirst);
@@ -151,9 +187,24 @@ function getCampaignManagerService() {
  *     instance
  */
 function getAudiencesController() {
-  if (!audiencesController) {
+  if (audiencesController == null) {
     audiencesController = new AudiencesController(
         getSheetsService(), getCampaignManagerService());
   }
   return audiencesController;
+}
+
+/**
+ * Returns the AudienceUpdateJobController instance, initializing it if it does
+ * not exist yet.
+ *
+ * @return {!AudienceUpdateJobController} The initialized
+ *     AudienceUpdateJobController instance
+ */
+function getAudienceUpdateJobController() {
+  if (audienceUpdateJobController == null) {
+    audienceUpdateJobController = new AudienceUpdateJobController(
+        getSheetsService(), getCampaignManagerService());
+  }
+  return audienceUpdateJobController;
 }
