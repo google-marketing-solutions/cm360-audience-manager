@@ -57,6 +57,8 @@ const CONFIG = {
   logging: {
     sheetName: 'Log',
     range: 'A1:B',
+    rangeStartCol: 'A',
+    rangeEndCol: 'B',
   },
   customVariables: {
     sheetName: 'aux',

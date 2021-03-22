@@ -116,74 +116,29 @@ function updateAllAudiencesJob(json) {
 
 /**
  * Defines the 'clearLogs' job.
- * @see Logger#clear
+ * @see client/logger.js#clear
+ * @see main.js#clearLogs
  *
  * @param {string} json A JSON representation of an object that contains the
  *     range to clear
  * @return {string} A JSON string of the result of 'clearLogs_'
  */
-function clearLogs(json) {
-  return invoke_('clearLogs_', json);
+function clearLogsJob(json) {
+  return invoke_('clearLogs', json);
 }
 
 /**
  * Defines the 'writeLogs' job.
- * @see Logger#log
+ * @see client/logger.js#log
+ * @see main.js#writeLogs
  *
  * @param {string} json A JSON representation of an object that contains the log
  *     messages to write and an offset corresponding to the sheet rows to skip
  *     before writing the logs
  * @return {string} A JSON string of the result of 'writeLogs_'
  */
-function writeLogs(json) {
-  return invoke_('writeLogs_', json);
-}
-
-/**
- * Implements the 'clearLogs' job. Calls {@link SheetsService#clearRange} to
- * clear all logs from the log sheet.
- *
- * @param {!Job} job The job object that is provided by the infrastructure. In
- *     this case it doesn't include any additional relevant information
- * @return {!Job} The input job object
- * @private
- */
-function clearLogs_(job) {
-  const sheetsService = new SheetsService();
-  sheetsService.clearRange(CONFIG.logging.sheetName, CONFIG.logging.range);
-  return job;
-}
-
-/**
- * Implements the 'writeLogs' job. Extracts logs from the given jobs then
- * calls {@link SheetsService#setValuesInRange} to write the given logs array
- * to the log sheet.
- *
- * @param {!Job} job The job wrapper which contains jobs with log messages to
- *     write and the offset to write them at
- * @return {!Job} The modified input job wrapper
- * @private
- */
-function writeLogs_(job) {
-  const range = 'A' + (job.getOffset() + 1) + ':B';
-
-  /** @type {!Array<!Array<{date: !Date, message: string}>>} */
-  const output = [];
-
-  job.getJobs()
-      .forEach((j) => {
-        output.push(...j.getLogs());
-        j.clearLogs();
-      });
-
-  if (output.length !== 0) {
-    job.setOffset(job.getOffset() + output.length);
-
-    const sheetsService = new SheetsService();
-    sheetsService.setValuesInRange(
-        CONFIG.logging.sheetName, range + job.getOffset(), output);
-  }
-  return job;
+function writeLogsJob(json) {
+  return invoke_('writeLogs', json);
 }
 
 /**

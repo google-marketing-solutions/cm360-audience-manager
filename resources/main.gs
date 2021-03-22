@@ -30,6 +30,9 @@ let sheetsService = null;
 /** @type {?CampaignManagerFacade} */
 let campaignManagerService = null;
 
+/** @type {?Logger} */
+let logger = null;
+
 /** @type {?AudiencesController} */
 let audiencesController = null;
 
@@ -117,6 +120,28 @@ function getAudiences() {
 }
 
 /**
+ * Clears all logs from the log sheet.
+ *
+ * @param {!Job} job The job object that is provided by the infrastructure. In
+ *     this case it doesn't include any additional relevant information
+ * @return {!Job} The input job object
+ */
+function clearLogs(job) {
+  return getLogger().clearLogs(job);
+}
+
+/**
+ * Extracts logs from the given jobs then and writes them to the log sheet.
+ *
+ * @param {!Job} job The job wrapper which contains jobs with log messages to
+ *     write and the offset to write them at
+ * @return {!Job} The modified input job wrapper
+ */
+function writeLogs(job) {
+  return getLogger().writeLogs(job);
+}
+
+/**
  * Identifies and updates audiences changed in the underlying spreadsheet.
  * @see jobs.js#updateAudiencesJob
  *
@@ -177,6 +202,18 @@ function getCampaignManagerService() {
         CONFIG.apiFirst);
   }
   return campaignManagerService;
+}
+
+/**
+ * Returns the Logger instance, initializing it if it does not exist yet.
+ *
+ * @return {!Logger} The initialized Logger instance
+ */
+function getLogger() {
+  if (logger == null) {
+    logger = new Logger(getSheetsService());
+  }
+  return logger;
 }
 
 /**
