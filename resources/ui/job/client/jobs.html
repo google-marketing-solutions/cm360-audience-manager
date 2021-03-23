@@ -45,7 +45,7 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
       await Logger.getLogger().clear();
       const createAudiencesResult = await Runner.init().run('createAudiencesJob', [new Job()]);
       const createAudienceResult =
-            await Runner.init().run('createAudienceJob', createAudiencesResult[0].jobs);
+            await Runner.init().run('createAudienceJob', createAudiencesResult[0].getJobs());
       await Logger.getLogger().log(createAudienceResult);
       setStatus('Ready', 'not-active');
     }
@@ -53,9 +53,10 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
     async function updateAudiencesHandler() {
       setStatus('Running...', 'active');
       await Logger.getLogger().clear();
-      const updateAudiencesResult = await Runner.init().run('updateAudiencesJob', [new Job()]);
+      const updateAudiencesResult =
+            await Runner.init().run('updateAudiencesJob', [new Job()]);
       const updateAudienceResult =
-            await Runner.init().run('updateAudienceJob', updateAudiencesResult[0].jobs);
+            await Runner.init().run('updateAudienceJob', updateAudiencesResult[0].getJobs());
       await Logger.getLogger().log(updateAudienceResult);
       setStatus('Ready', 'not-active');
     }
@@ -63,16 +64,19 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
     async function updateAllAudiencesHandler() {
       setStatus('Running...', 'active');
       await Logger.getLogger().clear();
-      const updateAllAudiencesResult = await Runner.init().run('updateAllAudiencesJob', [new Job()]);
+      const updateAllAudiencesResult =
+            await Runner.init().run('updateAllAudiencesJob', [new Job()]);
       const updateAudienceResult =
-            await Runner.init().run('updateAudienceJob', updateAllAudiencesResult[0].jobs);
+            await Runner.init().run('updateAudienceJob', updateAllAudiencesResult[0].getJobs());
       await Logger.getLogger().log(updateAudienceResult);
       setStatus('Ready', 'not-active');
     }
   </script>
+  <?!= include('ui/job/client/audienceUpdateJob') ?>
   <?!= include('ui/job/client/job') ?>
   <?!= include('ui/job/client/runner') ?>
   <?!= include('ui/job/client/logger') ?>
+  <?!= include('ui/job/client/utils') ?>
 </head>
 <body>
   <br/>

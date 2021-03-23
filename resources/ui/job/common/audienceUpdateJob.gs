@@ -38,7 +38,7 @@ class AudienceUpdateJob extends Job {
    *         audienceListShares: (!Array<string>|undefined),
    *     },
    *     idx: number,
-   *     shareWithAllAdvertisers: boolean,
+   *     shareableWithAllAdvertisers: boolean,
    * }} extParams
    * @param {{
    *     id: number,
@@ -47,17 +47,27 @@ class AudienceUpdateJob extends Job {
    *     jobs: !Array<!AudienceUpdateJob>,
    *     offset: number,
    *     error: string,
+   *     jobType: !JobType,
    * }=} baseParams
    */
-  constructor({
+  constructor(
+      {
         audienceId,
         audienceListResource,
         changedAttributes,
         idx,
-        shareWithAllAdvertisers,
+        shareableWithAllAdvertisers,
       },
-      {id = 0, run = true, logs = [], jobs = [], offset = 0, error = ''} = {}) {
-    super(id, run, logs, jobs, offset, error);
+      {
+        id = 0,
+        run = true,
+        logs = [],
+        jobs = [],
+        offset = 0,
+        error = '',
+        jobType = JobType.AUDIENCE_UPDATE,
+      } = {}) {
+    super(id, run, logs, jobs, offset, error, jobType);
 
     /** @private @const {string} */
     this.audienceId_ = audienceId;
@@ -78,39 +88,7 @@ class AudienceUpdateJob extends Job {
     this.idx_ = idx;
 
     /** @private @const {boolean} */
-    this.shareWithAllAdvertisers_ = shareWithAllAdvertisers;
-  }
-
-  /**
-   * Converts a parsed JSON representation of an AudienceUpdateJob into a proper
-   * instance of AudienceUpdateJob.
-   * @see Runner#successHandler
-   * @see Runner#errorHandler
-   *
-   * @param {!Object} parsedObj The result of JSON.parse on the serialized JSON
-   *     string representation of AudienceUpdateJob
-   * @return {!AudienceUpdateJob} An instance of AudienceUpdateJob
-   */
-  static fromJson(parsedObj) {
-    const job = Job.fromJson(parsedObj);
-
-    const extParams = {
-      audienceId: parsedObj.audienceId_,
-      audienceListResource: parsedObj.audienceListResource_,
-      changedAttributes: parsedObj.changedAttributes_,
-      idx: parsedObj.idx_,
-      shareWithAllAdvertisers: parsedObj.shareWithAllAdvertisers_,
-    };
-
-    const audienceUpdateJob = new AudienceUpdateJob(extParams, {
-      id: job.getId(),
-      run: true,
-      logs: job.getLogs(),
-      jobs: job.getJobs(),
-      offset: job.getOffset(),
-      error: job.getError(),
-    });
-    return audienceUpdateJob;
+    this.shareableWithAllAdvertisers_ = shareableWithAllAdvertisers;
   }
 
   /**
@@ -154,12 +132,12 @@ class AudienceUpdateJob extends Job {
   }
 
   /**
-   * Returns the shareWithAllAdvertisers boolean.
+   * Returns the shareableWithAllAdvertisers boolean.
    *
-   * @return {boolean} The shareWithAllAdvertisers boolean
+   * @return {boolean} The shareableWithAllAdvertisers boolean
    */
-  isShareWithAllAdvertisers() {
-    return this.shareWithAllAdvertisers_;
+  isShareableWithAllAdvertisers() {
+    return this.shareableWithAllAdvertisers_;
   }
 
 }

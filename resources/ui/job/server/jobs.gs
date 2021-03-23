@@ -157,7 +157,7 @@ function invoke_(functionName, input) {
 
   try {
     const parsedInput = JSON.parse(input);
-    job = Job.fromJson(parsedInput);
+    job = JobUtil.fromJson(parsedInput);
 
     return JSON.stringify(GLOBALCTX[functionName](job));
   } catch(error) {

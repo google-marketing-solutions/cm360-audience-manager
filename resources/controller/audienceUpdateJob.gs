@@ -150,7 +150,7 @@ class AudienceUpdateJobController {
         audienceListResource: remarketingListResource,
         changedAttributes: changedAttributes,
         idx: idx,
-        shareWithAllAdvertisers: updateAll,
+        shareableWithAllAdvertisers: updateAll,
       });
       return audienceUpdateJob;
     }
@@ -279,7 +279,7 @@ class AudienceUpdateJobController {
         /* val= */ CONFIG.multiSelect.modificationStatus.values.read,
         CONFIG.audiences.update.sheetName);
 
-    if (job.isShareWithAllAdvertisers()) {
+    if (job.isShareableWithAllAdvertisers()) {
       this.getSheetsService().setCellValue(
           row,
           /* col= */ CONFIG.audiences.update.cols.audienceListShares + 1,
@@ -350,5 +350,6 @@ class AudienceUpdateJobController {
   getCampaignManagerService() {
     return this.campaignManagerService_;
   }
+
 }
 

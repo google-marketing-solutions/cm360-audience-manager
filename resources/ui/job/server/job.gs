@@ -22,7 +22,7 @@
 
 
 /**
- * Internal job status consts, not exposed in {@link globals.js} along with the
+ * Internal job status enum, not exposed in {@link globals.js} along with the
  * rest of the config values since these should not be changed.
  * @enum {string}
  */
@@ -31,6 +31,18 @@ const JobStatus = {
   PENDING: 'PENDING',
   COMPLETE: 'COMPLETE',
   ERROR: 'ERROR',
+};
+
+/**
+ * Internal job type enum for proper deserialization in {@link #invoke_}.
+ * Not exposed in {@link globals.js} along with the rest of the config values
+ * since these should not be changed.
+ * @enum {string}
+ */
+const JobType = {
+  GENERIC: 'GENERIC',
+  AUDIENCE_CREATE: 'AUDIENCE_CREATE',
+  AUDIENCE_UPDATE: 'AUDIENCE_UPDATE',
 };
 
 /**
@@ -51,9 +63,16 @@ class Job {
    * @param {number=} offset Optional offset to pass along to job handlers. Used
    *     when writing logs for example to skip already written entries
    * @param {string=} error Optional error message to pass if an error occurred
+   * @param {!JobType=} jobType The type of Job to deserialize
    */
   constructor(
-      id = 0, run = true, logs = [], jobs = [], offset = 0, error = '') {
+      id = 0,
+      run = true,
+      logs = [],
+      jobs = [],
+      offset = 0,
+      error = '',
+      jobType = JobType.GENERIC) {
     /** @private {number} */
     this.id_ = id;
 
@@ -71,45 +90,9 @@ class Job {
 
     /** @private {string} */
     this.error_ = error;
-  }
 
-  /**
-   * Converts a parsed JSON representation of a Job into a proper instance of
-   * Job.
-   * @see Runner#successHandler
-   * @see Runner#errorHandler
-   *
-   * @param {!Object} parsedObj The result of JSON.parse on the serialized JSON
-   *     string representation of Job
-   * @return {!Job} An instance of Job
-   */
-  static fromJson(parsedObj) {
-    const id = parsedObj.id_ || 0;
-    const status = parsedObj.status_ || JobStatus.PENDING;
-    const offset = parsedObj.offset_ || 0;
-    const error = parsedObj.error_ || '';
-
-    let logs = [];
-    if (parsedObj.logs_) {
-      logs = parsedObj.logs_.map((log) => {
-        if (log.date && log.message) {
-          return {
-            date: new Date(log.date),
-            message: log.message,
-          };
-        }
-        return log;
-      });
-    }
-
-    let jobs = [];
-    if (parsedObj.jobs_) {
-      jobs = parsedObj.jobs_.map((job) => Job.fromJson(job));
-    }
-
-    const job = new Job(id, /* run= */ true, logs, jobs, offset, error);
-    job.updateStatus_(status);
-    return job;
+    /** @private {!JobType} */
+    this.jobType_ = jobType;
   }
 
   /**
@@ -297,5 +280,13 @@ class Job {
      return this.status_ === status;
   }
 
+  /**
+   * Returns the job's type.
+   *
+   * @return {!JobType} The job's type
+   */
+  getJobType() {
+    return this.jobType_;
+  }
 }
 

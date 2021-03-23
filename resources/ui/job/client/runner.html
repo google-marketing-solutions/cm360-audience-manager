@@ -291,7 +291,7 @@ class Runner {
    */
   handler_(input) {
     const parsedInput = JSON.parse(input);
-    const job = Job.fromJson(parsedInput);
+    const job = JobUtil.fromJson(parsedInput);
 
     if (!job.getError()) {
       job.complete();
