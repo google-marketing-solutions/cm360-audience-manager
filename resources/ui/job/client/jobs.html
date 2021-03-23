@@ -21,7 +21,7 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
 <!DOCTYPE html>
 <head>
   <meta charset="utf-8">
-  <title>Audiences Bulk Changes Manager</title>
+  <title>CM360 Audiences Bulk Manager</title>
   <style>
     #status {
       font-weight: bold;
@@ -29,54 +29,112 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
     .active {
       color: green;
     }
+    .error {
+      color: red;
+    }
     .not-active {
       color: #777777;
     }
+    .error-message {
+      white-space: pre-wrap;
+    }
   </style>
   <script>
-    function setStatus(statusText, statusClass) {
+    class JobError extends Error {
+      constructor(errors = [], ...params) {
+        super(...params);
+        this.name = 'JobError';
+        this.errors = errors;
+      }
+    }
+
+    function setStatus(statusText, statusClass, jobError = undefined) {
       const statusElem = document.getElementById('status');
       statusElem.innerHTML = statusText;
       statusElem.className = statusClass;
+
+      const errorElem = document.getElementById('error');
+      let errorMessage = '';
+
+      if (jobError) {
+        errorMessage = 'An error occurred! Please check the ' +
+          '<a href="https://script.google.com/home/executions" target="_blank">script logs</a> ' +
+          'for detailed information.<br/>Errors:';
+
+        jobError.errors.forEach((error) => {
+          errorMessage += `<br/>${JSON.stringify(error, null, 2)}`;
+        });
+      }
+      errorElem.innerHTML = errorMessage;
+    }
+
+    async function triggerAsyncJobs(name, jobs) {
+      const result = await Runner.init().run(name, jobs);
+      const errors = result.map((job) => {
+        if (job.isError()) {
+          return {
+            jobId: job.getId(),
+            errorMessage: job.getError(),
+          };
+        }
+        return null;
+      }).filter(Boolean);
+
+      if (errors.length !== 0) {
+        throw new JobError(errors);
+      }
+      return result;
     }
 
     async function createAudiencesHandler() {
-      setStatus('Running...', 'active');
-      await Logger.getLogger().clear();
-      const createAudiencesResult = await Runner.init().run('createAudiencesJob', [new Job()]);
-      const createAudienceResult =
-            await Runner.init().run('createAudienceJob', createAudiencesResult[0].getJobs());
-      await Logger.getLogger().log(createAudienceResult);
-      setStatus('Ready', 'not-active');
+      try {
+        setStatus('Running...', 'active');
+        await Logger.getLogger().clear();
+        const createAudiencesResult = await Runner.init().run('createAudiencesJob', [new Job()]);
+        const createAudienceResult =
+              await Runner.init().run('createAudienceJob', createAudiencesResult[0].getJobs());
+        await Logger.getLogger().log(createAudienceResult);
+        setStatus('Ready', 'not-active');
+      } catch (error) {
+        setStatus('ERROR', 'error', error);
+      }
     }
 
     async function updateAudiencesHandler() {
-      setStatus('Running...', 'active');
-      await Logger.getLogger().clear();
-      const updateAudiencesResult =
-            await Runner.init().run('updateAudiencesJob', [new Job()]);
-      const updateAudienceResult =
-            await Runner.init().run('updateAudienceJob', updateAudiencesResult[0].getJobs());
-      await Logger.getLogger().log(updateAudienceResult);
-      setStatus('Ready', 'not-active');
+      try {
+        setStatus('Running...', 'active');
+        await Logger.getLogger().clear();
+        const updateAudiencesResult =
+              await Runner.init().run('updateAudiencesJob', [new Job()]);
+        const updateAudienceResult =
+              await Runner.init().run('updateAudienceJob', updateAudiencesResult[0].getJobs());
+        await Logger.getLogger().log(updateAudienceResult);
+        setStatus('Ready', 'not-active');
+      } catch (error) {
+        setStatus('ERROR', 'error', error);
+      }
     }
 
     async function updateAllAudiencesHandler() {
-      setStatus('Running...', 'active');
-      await Logger.getLogger().clear();
-      const updateAllAudiencesResult =
-            await Runner.init().run('updateAllAudiencesJob', [new Job()]);
-      const updateAudienceResult =
-            await Runner.init().run('updateAudienceJob', updateAllAudiencesResult[0].getJobs());
-      await Logger.getLogger().log(updateAudienceResult);
-      setStatus('Ready', 'not-active');
+      try {
+        setStatus('Running...', 'active');
+        await Logger.getLogger().clear();
+        const updateAllAudiencesResult =
+              await Runner.init().run('updateAllAudiencesJob', [new Job()]);
+        const updateAudienceResult =
+              await Runner.init().run('updateAudienceJob', updateAllAudiencesResult[0].getJobs());
+        await Logger.getLogger().log(updateAudienceResult);
+        setStatus('Ready', 'not-active');
+      } catch (error) {
+        setStatus('ERROR', 'error', error);
+      }
     }
   </script>
-  <?!= include('ui/job/client/audienceUpdateJob') ?>
   <?!= include('ui/job/client/job') ?>
+  <?!= include('ui/job/client/audienceUpdateJob') ?>
+  <?!= include('ui/job/client/utils') ?>
   <?!= include('ui/job/client/runner') ?>
   <?!= include('ui/job/client/logger') ?>
-  <?!= include('ui/job/client/utils') ?>
 </head>
 <body>
   <br/>
@@ -92,4 +150,6 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
   <button id='update-all-audiences'
           onclick='updateAllAudiencesHandler()'>Share ALL Audiences with ALL Advertisers</button>
   <br/>
+  <br/>
+  <span id='error' class='error-message'></span>
 </body>

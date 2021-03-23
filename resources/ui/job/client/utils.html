@@ -83,18 +83,8 @@ class JobUtil {
 
     const job =
         new Job(id, /* run= */ true, logs, jobs, offset, error, jobType);
+    this.updateJobStatus_(job, status, error);
 
-    switch(status) {
-      case JobStatus.RUNNING:
-        job.run();
-        break;
-      case JobStatus.COMPLETE:
-        job.complete();
-        break;
-      case JobStatus.ERROR:
-        job.error(error);
-        break;
-    }
     return job;
   }
 
@@ -127,7 +117,33 @@ class JobUtil {
       error: job.getError(),
       jobType: job.getJobType(),
     });
+    const status = parsedObj.status_ || JobStatus.PENDING;
+    this.updateJobStatus_(audienceUpdateJob, status, job.getError());
+
     return audienceUpdateJob;
+  }
+
+  /**
+   * Updates the job's status as it is reset on creation based on the value of
+   * the 'run' boolean flag.
+   *
+   * @param {!Job} job The job to set the status for
+   * @param {string} status The status to set
+   * @param {string} error The error to set in case of an ERROR status
+   * @private
+   */
+  static updateJobStatus_(job, status, error) {
+    switch(status) {
+      case JobStatus.RUNNING:
+        job.run();
+        break;
+      case JobStatus.COMPLETE:
+        job.complete();
+        break;
+      case JobStatus.ERROR:
+        job.error(error);
+        break;
+    }
   }
 }
 

@@ -64,16 +64,15 @@ class Logger {
    *     write and the offset to write them at
    * @param {{
    *     sheetName: string,
-   *     rangeStartCol: string,
-   *     rangeEndCol: string,
+   *     row: number,
+   *     col: number,
    * }=} params
    * @return {!Job} The modified input job wrapper
    */
   writeLogs(job, {
       sheetName = CONFIG.logging.sheetName,
-      rangeStartCol = CONFIG.logging.rangeStartCol,
-      rangeEndCol = CONFIG.logging.rangeEndCol} = {}) {
-    const range = `${rangeStartCol}${job.getOffset() + 1}:${rangeEndCol}`;
+      row = CONFIG.logging.row,
+      col = CONFIG.logging.col} = {}) {
     const output = [];
     output.push(...this.mapAndClearLogs_(job));
 
@@ -83,8 +82,10 @@ class Logger {
         });
 
     if (output.length !== 0) {
+      const offsetRow = job.getOffset() + row;
       job.setOffset(job.getOffset() + output.length);
-      this.getSheetsService().setValuesInRange(sheetName, range, output);
+      this.getSheetsService()
+          .setValuesInDefinedRange(sheetName, offsetRow, col, output);
     }
     return job;
   }

@@ -115,7 +115,8 @@ class Runner {
 
         google.script.run
             .withSuccessHandler((result) => this.successHandler(result))
-            .withFailureHandler((error) => this.errorHandler(error.message))
+            .withFailureHandler((error) =>
+                this.errorHandler(error.message.replace(/Error:/, '')))
             [this.getCommand()](json);
 
         runningCount++;

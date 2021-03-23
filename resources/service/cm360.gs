@@ -148,7 +148,6 @@ class CampaignManagerService {
         .update(
             remarketingListResource,
             profileId,
-            this.getAccountData().advertiserId,
             {accountId: this.getAccountData().networkId});
   }
 
