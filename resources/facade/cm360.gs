@@ -153,6 +153,20 @@ class CampaignManagerFacade {
   }
 
   /**
+   * Creates a remarketing list using the given parameters.
+   *
+   * @param {!Object} remarketingList The remarketing list object to use for the
+   *     create operation
+   * @return {!Object} The created remarketingListResource object
+   */
+  createRemarketingList(remarketingList) {
+    const profileId = this.getUserProfileId();
+
+    return this.getCampaignManager()
+        .createRemarketingList(profileId, remarketingList);
+  }
+
+  /**
    * Retrieves configured remarketing list shares for the given remarketing list
    * ID from the logged in user's CM360 Network and Advertiser.
    *

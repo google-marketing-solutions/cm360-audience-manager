@@ -29,16 +29,15 @@ class UriUtil {
    * Extends an object identified by 'original' with the values in 'extension'.
    * Array values in 'extension' will be appended to existing arrays
    * in 'original', however all other objects in 'extension' will override
-   * existing counterparts in 'original'.
+   * existing counterparts in 'original'. The type of 'original' will be
+   * preserved (if it wasn't null or undefined).
    *
-   * @param {?Object} original The original object to extend
+   * @param {?Object} original The original object to extend, which may be null
    * @param {!Object} extension The value to use for extending
    * @return {!Object} The extended object
    */
   static extend(original, extension) {
-    if (original == null ||
-        (Object.entries(original).length === 0 &&
-         original.constructor === Object)) {
+    if (original == null) {
       return extension;
     }
     for (const key in extension) {

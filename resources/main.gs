@@ -39,6 +39,9 @@ let audiencesController = null;
 /** @type {?AudienceUpdateJobController} */
 let audienceUpdateJobController = null;
 
+/** @type {?AudienceCreateJobController} */
+let audienceCreateJobController = null;
+
 /**
  * Creates a new menu in Google Sheets that contains different methods for
  * retrieving and updating Campaign Manager audience lists.
@@ -169,11 +172,36 @@ function updateAllAudiences(job) {
  * {@link #updateAudiences} or {@link #updateAllAudiences}.
  * @see jobs.js#updateAudienceJob
  *
- * @param {!AudienceUpdateJob} job The job instance passed by the jobs infrastructure
+ * @param {!AudienceUpdateJob} job The job instance passed by the jobs
+ *     infrastructure
  * @return {!AudienceUpdateJob} The job instance
  */
 function updateAudience(job) {
   return getAudienceUpdateJobController().updateAudience(job);
+}
+
+/**
+ * Identifies and updates audiences added to the underlying spreadsheet.
+ * @see jobs.js#createAudiencesJob
+ *
+ * @param {!Job} job The job instance passed by the jobs infrastructure
+ * @return {!Job} The modified job instance
+ */
+function createAudiences(job) {
+  return getAudienceCreateJobController().createAudiences(job);
+}
+
+/**
+ * Creates a single audience. Triggered once for every added audience from
+ * {@link #createAudiences}.
+ * @see jobs.js#createAudienceJob
+ *
+ * @param {!AudienceCreateJob} job The job instance passed by the jobs
+ *     infrastructure
+ * @return {!AudienceCreateJob} The job instance
+ */
+function createAudience(job) {
+  return getAudienceCreateJobController().createAudience(job);
 }
 
 /**
@@ -244,4 +272,19 @@ function getAudienceUpdateJobController() {
         getSheetsService(), getCampaignManagerService());
   }
   return audienceUpdateJobController;
+}
+
+/**
+ * Returns the AudienceCreateJobController instance, initializing it if it does
+ * not exist yet.
+ *
+ * @return {!AudienceCreateJobController} The initialized
+ *     AudienceCreateJobController instance
+ */
+function getAudienceCreateJobController() {
+  if (audienceCreateJobController == null) {
+    audienceCreateJobController = new AudienceCreateJobController(
+        getSheetsService(), getCampaignManagerService());
+  }
+  return audienceCreateJobController;
 }

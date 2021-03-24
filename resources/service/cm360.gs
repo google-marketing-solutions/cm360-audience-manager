@@ -152,6 +152,28 @@ class CampaignManagerService {
   }
 
   /**
+   * Creates a remarketing list using the given parameters.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {!Object} remarketingList The remarketing list object to use for the
+   *     create operation
+   * @return {!Object} The created remarketingListResource object
+   */
+  createRemarketingList(profileId, remarketingList) {
+    const extendedRemarketingList = UriUtil.extend(remarketingList, {
+      advertiserId: this.getAccountData().advertiserId,
+    });
+    const remarketingListResource = UriUtil.extend(
+        this.getService().newRemarketingList(), extendedRemarketingList);
+    return this.getService()
+        .RemarketingLists
+        .insert(
+            remarketingListResource,
+            profileId,
+            {accountId: this.getAccountData().networkId});
+  }
+
+  /**
    * Retrieves configured remarketing list shares for the given remarketing list
    * ID from the logged in user's CM360 Network and Advertiser.
    *

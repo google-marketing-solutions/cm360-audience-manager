@@ -64,9 +64,11 @@ const CONFIG = {
     sheetName: 'aux',
     row: 2,
     col: 1,
+    separator: ':',
   },
   floodlights: {
     sheetName: 'floodlights',
+    idAndNameRegex: '\\((\\d+)\\)',
     row: 2,
     col: 1,
   },
@@ -78,7 +80,34 @@ const CONFIG = {
     defaultName: 'MISSING',
   },
   audiences: {
-    create: {},
+    create: {
+      sheetName: 'Create Audiences',
+      defaultState: true,
+      listSource: 'REMARKETING_LIST_SOURCE_DFA',
+      row: 3,
+      col: 1,
+      cols: {
+        name: 0,
+        lifeSpan: 1,
+        description: 2,
+        floodlightId: 3,
+        rules: {
+          termType: 'CUSTOM_VARIABLE_TERM',
+          separator: ',',
+          rangeStart: 4,
+          rangeEnd: 15,
+          rangeLength: 4,
+          rangeIndex: {
+            name: 0,
+            operator: 1,
+            value: 2,
+            negation: 3,
+          },
+          relationship: 16,
+        },
+        status: 17,
+      },
+    },
     update: {
       sheetName: 'Update Audiences',
       row: 3,

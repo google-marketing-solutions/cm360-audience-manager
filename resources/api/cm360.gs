@@ -148,6 +148,26 @@ class CampaignManagerApi extends BaseApi {
   }
 
   /**
+   * Creates a remarketing list using the given parameters.
+   *
+   * @param {string} profileId The user profile ID
+   * @param {!Object} remarketingList The remarketing list object to use for the
+   *     create operation
+   * @return {!Object} The created remarketingListResource object
+   */
+  createRemarketingList(profileId, remarketingList) {
+    const path = `userprofiles/${profileId}/remarketingLists`;
+
+    return this.executeApiRequest(
+        /* requestUri= */ path,
+        /* requestParams= */ {
+          method: 'post',
+          payload: JSON.stringify(remarketingList),
+        },
+        /* retryOnFailure= */ false);
+  }
+
+  /**
    * Retrieves configured remarketing list shares for the given remarketing list
    * ID from the logged in user's CM360 Network and Advertiser.
    *

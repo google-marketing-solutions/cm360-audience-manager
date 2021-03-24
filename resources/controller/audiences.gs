@@ -49,18 +49,21 @@ class AudiencesController {
    *     sheetName: string,
    *     row: number,
    *     col: number,
+   *     separator: string,
    * }=} params
    */
   fetchAndOutputCustomVariables({
       sheetName = CONFIG.customVariables.sheetName,
       row = CONFIG.customVariables.row,
-      col = CONFIG.customVariables.col} = {}) {
+      col = CONFIG.customVariables.col,
+      separator = CONFIG.customVariables.separator} = {}) {
     this.getSheetsService().clearDefinedRange(sheetName, row, col);
 
     const data = this.getCampaignManagerService()
         .getUserDefinedVariableConfigurations();
 
-    const output = data.map((v) => `${v.variableType}:${v.reportName}`);
+    const output = data.map((v) =>
+      `${v.variableType}${separator}${v.reportName}`);
     this.getSheetsService()
         .setValuesInDefinedRange(sheetName, row, col, [output]);
   }
