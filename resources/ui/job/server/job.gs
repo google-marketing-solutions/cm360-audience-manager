@@ -27,10 +27,10 @@
  * @enum {string}
  */
 const JobStatus = {
-  RUNNING: 'RUNNING',
-  PENDING: 'PENDING',
   COMPLETE: 'COMPLETE',
   ERROR: 'ERROR',
+  PENDING: 'PENDING',
+  RUNNING: 'RUNNING',
 };
 
 /**
@@ -40,9 +40,9 @@ const JobStatus = {
  * @enum {string}
  */
 const JobType = {
-  GENERIC: 'GENERIC',
   AUDIENCE_CREATE: 'AUDIENCE_CREATE',
   AUDIENCE_UPDATE: 'AUDIENCE_UPDATE',
+  GENERIC: 'GENERIC',
 };
 
 /**
@@ -53,6 +53,7 @@ class Job {
    * @constructs an instance of Job.
    *
    * @param {number=} id Optional job identifier. Falls back to 0
+   * @param {number=} index Optional job index. Falls back to 0
    * @param {boolean=} run Optional flag whether to run the job or not. If the
    *     flag isn't present or true the job will run
    * @param {!Array<{date: !Date, message: string}>=} logs Optional array of
@@ -67,6 +68,7 @@ class Job {
    */
   constructor(
       id = 0,
+      index = 0,
       run = true,
       logs = [],
       jobs = [],
@@ -75,6 +77,9 @@ class Job {
       jobType = JobType.GENERIC) {
     /** @private {number} */
     this.id_ = id;
+
+    /** @private @const {number} */
+    this.index_ = index;
 
     /** @private {!JobStatus} */
     this.status_ = run ? JobStatus.PENDING : JobStatus.COMPLETE;
@@ -220,6 +225,15 @@ class Job {
    */
   setId(id) {
     this.id_ = id;
+  }
+
+  /**
+   * Returns the job's index.
+   *
+   * @return {number} The job's index
+   */
+  getIndex() {
+    return this.index_;
   }
 
   /**

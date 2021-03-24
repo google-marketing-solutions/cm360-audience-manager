@@ -74,7 +74,12 @@ class Logger {
    */
   async log(jobs) {
     const job = new Job(
-        /* id= */ 0, /* run= */ true, /* logs= */ [], jobs, this.offset_);
+        /* id= */ 0,
+        /* index= */ 0,
+        /* 0 run= */ true,
+        /* logs= */ [],
+        jobs,
+        this.offset_);
     this.offset_ += this.countLogLines(jobs);
 
     const /* !Array<!Job> */ result =

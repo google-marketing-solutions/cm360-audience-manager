@@ -229,8 +229,16 @@ class AudienceUpdateJobController {
    *
    * @param {!AudienceUpdateJob} job The job instance passed by the jobs
    *     infrastructure
+   * @param {{
+   *     sheetName: string,
+   *     row: number,
+   *     nameCol: number,
+   * }=} params
    */
-  updateRemarketingList(job) {
+  updateRemarketingList(job, {
+      sheetName = CONFIG.audiences.update.sheetName,
+      row = CONFIG.audiences.update.row,
+      nameCol = CONFIG.audiences.update.cols.name} = {}) {
     const audienceListResource = job.getAudienceListResource();
     const currentName = audienceListResource.name;
     const newName = job.getChangedAttributes().name;
@@ -242,10 +250,7 @@ class AudienceUpdateJobController {
     this.getCampaignManagerService()
         .updateRemarketingList(audienceListResource);
     this.getSheetsService().setCellValue(
-        /* row= */ CONFIG.audiences.update.row + job.getIdx(),
-        /* col= */ CONFIG.audiences.update.cols.name + 1,
-        /* val= */ newName,
-        /* sheetName= */ CONFIG.audiences.update.sheetName);
+        row + job.getIndex(), nameCol + 1, /* val= */ newName, sheetName);
 
     const message = `Updated audience name from ` +
         `"${currentName}" to "${newName}" successfully!`;
@@ -259,10 +264,22 @@ class AudienceUpdateJobController {
    *
    * @param {!AudienceUpdateJob} job The job instance passed by the jobs
    *     infrastructure
+   * @param {{
+   *     sheetName: string,
+   *     updateRow: number,
+   *     statusCol: number,
+   *     audienceListSharesCol: number,
+   *     readVal: string,
+   * }=} params
    */
-  updateRemarketingListShares(job) {
+  updateRemarketingListShares(job, {
+      sheetName = CONFIG.audiences.update.sheetName,
+      updateRow = CONFIG.audiences.update.row,
+      statusCol = CONFIG.audiences.update.cols.status,
+      audienceListSharesCol = CONFIG.audiences.update.cols.audienceListShares,
+      readVal = CONFIG.multiSelect.modificationStatus.values.read} = {}) {
     const audienceId = job.getAudienceId();
-    const row = CONFIG.audiences.update.row + job.getIdx();
+    const row = updateRow + job.getIndex();
 
     const remarketingListSharesResource = this.getCampaignManagerService()
         .getRemarketingListSharesResource(audienceId);
@@ -274,17 +291,14 @@ class AudienceUpdateJobController {
     this.getCampaignManagerService().updateRemarketingListShares(
         audienceId, remarketingListSharesResource);
     this.getSheetsService().setCellValue(
-        row,
-        /* col= */ CONFIG.audiences.update.cols.status + 1,
-        /* val= */ CONFIG.multiSelect.modificationStatus.values.read,
-        CONFIG.audiences.update.sheetName);
+        row, statusCol + 1, /* val= */ readVal, sheetName);
 
     if (job.isShareableWithAllAdvertisers()) {
       this.getSheetsService().setCellValue(
           row,
-          /* col= */ CONFIG.audiences.update.cols.audienceListShares + 1,
+          audienceListSharesCol + 1,
           /* val= */ this.joinSharedAdvertisers(),
-          CONFIG.audiences.update.sheetName);
+          sheetName);
     }
     const message = 'List of advertisers for audience ' +
         `${audienceId} updated successfully!`;

@@ -42,6 +42,7 @@ class AudienceUpdateJob extends Job {
    * }} extParams
    * @param {{
    *     id: number,
+   *     index: number,
    *     run: boolean,
    *     logs: !Array<{date: !Date, message: string}>,
    *     jobs: !Array<!AudienceUpdateJob>,
@@ -60,6 +61,7 @@ class AudienceUpdateJob extends Job {
       },
       {
         id = 0,
+        index = idx,
         run = true,
         logs = [],
         jobs = [],
@@ -67,7 +69,7 @@ class AudienceUpdateJob extends Job {
         error = '',
         jobType = JobType.AUDIENCE_UPDATE,
       } = {}) {
-    super(id, run, logs, jobs, offset, error, jobType);
+    super(id, index, run, logs, jobs, offset, error, jobType);
 
     /** @private @const {string} */
     this.audienceId_ = audienceId;
@@ -83,9 +85,6 @@ class AudienceUpdateJob extends Job {
      * }}
      */
     this.changedAttributes_ = changedAttributes;
-
-    /** @private @const {number} */
-    this.idx_ = idx;
 
     /** @private @const {boolean} */
     this.shareableWithAllAdvertisers_ = shareableWithAllAdvertisers;
@@ -120,15 +119,6 @@ class AudienceUpdateJob extends Job {
    */
   getChangedAttributes() {
     return this.changedAttributes_;
-  }
-
-  /**
-   * Returns the idx.
-   *
-   * @return {number} The idx
-   */
-  getIdx() {
-    return this.idx_;
   }
 
   /**

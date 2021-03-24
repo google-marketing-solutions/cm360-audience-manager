@@ -37,6 +37,9 @@ class JobUtil {
     let job = null;
 
     switch(jobType) {
+      case JobType.AUDIENCE_CREATE:
+        job = this.audienceCreateJobFromJson_(parsedObj);
+        break;
       case JobType.AUDIENCE_UPDATE:
         job = this.audienceUpdateJobFromJson_(parsedObj);
         break;
@@ -57,6 +60,7 @@ class JobUtil {
    */
   static jobFromJson_(parsedObj) {
     const id = parsedObj.id_ || 0;
+    const index = parsedObj.index_ || 0;
     const status = parsedObj.status_ || JobStatus.PENDING;
     const offset = parsedObj.offset_ || 0;
     const error = parsedObj.error_ || '';
@@ -81,10 +85,57 @@ class JobUtil {
     }
 
     const job =
-        new Job(id, /* run= */ true, logs, jobs, offset, error, jobType);
+        new Job(id, index, /* run= */ true, logs, jobs, offset, error, jobType);
     this.updateJobStatus_(job, status, error);
 
     return job;
+  }
+
+  /**
+   * Converts a parsed JSON representation of an AudienceCreateJob into a
+   * proper instance of AudienceCreateJob.
+   *
+   * @param {!Object} parsedObj The result of JSON.parse on the serialized JSON
+   *     string representation of AudienceCreateJob
+   * @return {!AudienceCreateJob} An instance of AudienceCreateJob
+   * @private
+   */
+  static audienceCreateJobFromJson_(parsedObj) {
+    const job = this.jobFromJson_(parsedObj);
+
+    const extParams = {
+      audienceName: parsedObj.audienceName_,
+      description: parsedObj.description_,
+      lifeSpan: parsedObj.lifeSpan_,
+      floodlightId: parsedObj.floodlightId_,
+      idx: job.getIndex(),
+    };
+
+    const audienceCreateJob = new AudienceCreateJob(extParams, {
+      id: job.getId(),
+      index: job.getIndex(),
+      run: true,
+      logs: job.getLogs(),
+      jobs: job.getJobs(),
+      offset: job.getOffset(),
+      error: job.getError(),
+      jobType: job.getJobType(),
+    });
+
+    const audienceRules = parsedObj.audienceRules_;
+    const relationship = audienceRules.relationship ?
+        AudienceRuleRelationshipType[audienceRules.relationship] :
+        AudienceRuleRelationshipType.AND;
+    const rules = audienceRules.rules || [];
+
+    if (rules.length !== 0) {
+      audienceCreateJob.addAudienceRules(rules, relationship);
+    }
+
+    const status = parsedObj.status_ || JobStatus.PENDING;
+    this.updateJobStatus_(audienceCreateJob, status, job.getError());
+
+    return audienceCreateJob;
   }
 
   /**
@@ -103,12 +154,13 @@ class JobUtil {
       audienceId: parsedObj.audienceId_,
       audienceListResource: parsedObj.audienceListResource_,
       changedAttributes: parsedObj.changedAttributes_,
-      idx: parsedObj.idx_,
+      idx: job.getIndex(),
       shareableWithAllAdvertisers: parsedObj.shareableWithAllAdvertisers_,
     };
 
     const audienceUpdateJob = new AudienceUpdateJob(extParams, {
       id: job.getId(),
+      index: job.getIndex(),
       run: true,
       logs: job.getLogs(),
       jobs: job.getJobs(),
