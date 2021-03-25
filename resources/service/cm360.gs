@@ -82,7 +82,7 @@ class CampaignManagerService {
    */
   getFloodlightActivities(profileId) {
     return this.getService()
-        .FloodlightConfigurations
+        .FloodlightActivities
         .list(
             profileId,
             {advertiserId: this.getAccountData().advertiserId})
@@ -160,11 +160,9 @@ class CampaignManagerService {
    * @return {!Object} The created remarketingListResource object
    */
   createRemarketingList(profileId, remarketingList) {
-    const extendedRemarketingList = UriUtil.extend(remarketingList, {
-      advertiserId: this.getAccountData().advertiserId,
-    });
     const remarketingListResource = UriUtil.extend(
-        this.getService().newRemarketingList(), extendedRemarketingList);
+        this.getService().newRemarketingList(), remarketingList);
+
     return this.getService()
         .RemarketingLists
         .insert(

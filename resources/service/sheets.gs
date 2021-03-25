@@ -220,7 +220,7 @@ class SheetsService {
    */
   appendToDefinedRange(sheetName, row, col, values) {
     const sheet = this.getSpreadsheet().getSheetByName(sheetName);
-    const startRow = sheet.getLastRow() || row;
+    const startRow = sheet.getLastRow() ? sheet.getLastRow() + 1 : row;
     sheet.getRange(startRow, col, values.length, values[0].length)
         .setValues(values);
   }

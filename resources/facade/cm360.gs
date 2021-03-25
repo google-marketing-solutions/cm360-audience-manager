@@ -161,9 +161,12 @@ class CampaignManagerFacade {
    */
   createRemarketingList(remarketingList) {
     const profileId = this.getUserProfileId();
+    const extendedRemarketingList = UriUtil.extend(remarketingList, {
+      advertiserId: this.getAccountData().advertiserId,
+    });
 
     return this.getCampaignManager()
-        .createRemarketingList(profileId, remarketingList);
+        .createRemarketingList(profileId, extendedRemarketingList);
   }
 
   /**

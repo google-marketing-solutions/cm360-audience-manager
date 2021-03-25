@@ -334,7 +334,7 @@ class AudienceUpdateJobController {
 
     if (advertisers.length !== 0) {
       result = advertisers.reduce((arr, adv) => {
-        if (adv.length !== 0) {
+        if (adv.length !== 0 && adv[0] && adv[1]) {
           arr.push(idsOnly ? Number(adv[0]) : String(adv[1]));
         }
         return arr;

@@ -91,10 +91,9 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
       try {
         setStatus('Running...', 'active');
         await Logger.getLogger().clear();
-        const createAudiencesResult =
-              await Runner.init().run(JobName.CREATE_AUDIENCES, [new Job()]);
+        const createAudiencesResult = await triggerAsyncJobs(JobName.CREATE_AUDIENCES, [new Job()]);
         const createAudienceResult =
-              await Runner.init().run(JobName.CREATE_AUDIENCE, createAudiencesResult[0].getJobs());
+              await triggerAsyncJobs(JobName.CREATE_AUDIENCE, createAudiencesResult[0].getJobs());
         await Logger.getLogger().log(createAudienceResult);
         setStatus('Ready', 'not-active');
       } catch (error) {
@@ -106,10 +105,9 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
       try {
         setStatus('Running...', 'active');
         await Logger.getLogger().clear();
-        const updateAudiencesResult =
-              await Runner.init().run(JobName.UPDATE_AUDIENCES, [new Job()]);
+        const updateAudiencesResult = await triggerAsyncJobs(JobName.UPDATE_AUDIENCES, [new Job()]);
         const updateAudienceResult =
-              await Runner.init().run(JobName.UPDATE_AUDIENCE, updateAudiencesResult[0].getJobs());
+              await triggerAsyncJobs(JobName.UPDATE_AUDIENCE, updateAudiencesResult[0].getJobs());
         await Logger.getLogger().log(updateAudienceResult);
         setStatus('Ready', 'not-active');
       } catch (error) {
@@ -122,8 +120,8 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
         setStatus('Running...', 'active');
         await Logger.getLogger().clear();
         const updateAllAudiencesResult =
-              await Runner.init().run(JobName.UPDATE_ALL_AUDIENCES, [new Job()]);
-        const updateAudienceResult = await Runner.init().run(
+              await triggerAsyncJobs(JobName.UPDATE_ALL_AUDIENCES, [new Job()]);
+        const updateAudienceResult = await triggerAsyncJobs(
           JobName.UPDATE_AUDIENCE, updateAllAudiencesResult[0].getJobs());
         await Logger.getLogger().log(updateAudienceResult);
         setStatus('Ready', 'not-active');

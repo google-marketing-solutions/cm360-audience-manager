@@ -50,6 +50,7 @@ class AudienceCreateJobController {
    *     sheetName: string,
    *     row: number,
    *     col: number,
+   *     nameCol: number,
    *     statusCol: number,
    * }=} params
    * @return {!Job} The modified job instance
@@ -58,6 +59,7 @@ class AudienceCreateJobController {
       sheetName = CONFIG.audiences.create.sheetName,
       row = CONFIG.audiences.create.row,
       col = CONFIG.audiences.create.col,
+      nameCol = CONFIG.audiences.create.cols.name,
       statusCol = CONFIG.audiences.create.cols.status} = {}) {
     this.getSheetsService().showToast(
         /* message= */ 'Creating new audiences...',
@@ -66,7 +68,9 @@ class AudienceCreateJobController {
     const audiences = this.getSheetsService().getRangeData(sheetName, row, col);
     const jobs = audiences
         .filter((audience) =>
-          audience.length !== 0 && String(audience[statusCol]) === '')
+          audience.length !== 0 &&
+            String(audience[nameCol]) &&
+            !String(audience[statusCol]))
         .map((audience, index) =>
           this.createAudienceCreateJob(audience, index));
     job.getJobs().push(...jobs);
@@ -242,7 +246,7 @@ class AudienceCreateJobController {
       active: defaultState,
       listSource: listSource,
     };
-    let status = '';
+    let status;
 
     try {
       const result = this.getCampaignManagerService()
@@ -289,8 +293,8 @@ class AudienceCreateJobController {
    * }} The created list population rule object
    */
   createListPopulationRule(floodlightId, audienceRules, {
-      termType = CONFIG.audiences.create.rules.termType,
-      separator = CONFIG.audiences.create.rules.separator} = {}) {
+      termType = CONFIG.audiences.create.cols.rules.termType,
+      separator = CONFIG.audiences.create.cols.rules.separator} = {}) {
     let listPopulationRule = {floodlightActivityId: floodlightId};
 
     if (audienceRules.rules.length !== 0) {

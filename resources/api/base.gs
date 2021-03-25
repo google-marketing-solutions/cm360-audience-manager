@@ -57,13 +57,12 @@ class BaseApi {
    */
   executePagedApiRequest(
       requestUri, requestParams, requestCallback, maxPages = -1) {
-    const params = this.buildApiParams(requestParams);
     let url = this.buildApiUrl(requestUri);
     let pageCount = 1;
     let pageToken;
 
     do {
-      const result = this.executeApiRequest(url, params, true);
+      const result = this.executeApiRequest(url, requestParams, true);
       console.log(`Output results page: ${pageCount}`);
       this.handleResponse(result, requestCallback);
 
@@ -113,20 +112,25 @@ class BaseApi {
         console.warn(
             'Retry on failure not supported or all retries ' +
             'have been exhausted... Failing!');
-        throw new Error(
-            'Sorry an error ocurred, please check your input and try again!');
+        throw new Error(e.message);
       }
     }
   }
 
   /**
-   * Constructs the fully-qualified API URL using the given requestUri.
+   * Constructs the fully-qualified API URL using the given requestUri if not
+   * already done.
    *
    * @param {string} requestUri The URI of the request
    * @return {string} The fully-qualified API URL
    */
   buildApiUrl(requestUri) {
-    return `https://www.googleapis.com/` +
+    const protocolAndDomain = 'https://www.googleapis.com/';
+
+    if (requestUri.startsWith(protocolAndDomain)) {
+      return requestUri;
+    }
+    return protocolAndDomain +
         `${this.apiScope_}/${this.apiVersion_}/${requestUri}`;
   }
 

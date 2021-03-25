@@ -62,10 +62,11 @@ class AudiencesController {
     const data = this.getCampaignManagerService()
         .getUserDefinedVariableConfigurations();
 
-    const output = data.map((v) =>
-      `${v.variableType}${separator}${v.reportName}`);
+    const output = data.length !== 0 ?
+        data.map((v) => [`${v.variableType}${separator}${v.reportName}`]) :
+        [[]];
     this.getSheetsService()
-        .setValuesInDefinedRange(sheetName, row, col, [output]);
+        .setValuesInDefinedRange(sheetName, row, col, output);
   }
 
   /**

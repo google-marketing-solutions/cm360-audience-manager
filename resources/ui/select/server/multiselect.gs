@@ -89,10 +89,8 @@ function setValues_(selectedSidebarValues) {
  * @private
  */
 function setModificationStatus_() {
-  if (CONFIG.multiSelect.modificationStatus.enabled) {
     getSheetsService().setCellValue(
         getSheetsService().getSelectedRange().getRow(),
         CONFIG.multiSelect.modificationStatus.column,
         CONFIG.multiSelect.modificationStatus.values.update);
-  }
 }
