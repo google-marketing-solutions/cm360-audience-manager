@@ -13,8 +13,7 @@ Contributions are highly encouraged; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Configuration and Setup
 
-1.  Make a copy of this
-    [template](https://docs.google.com/spreadsheets/d/1LtEflhLygH3dJ2aBFQfCZXF39b5V1KuE2FM6JlzZCG8){target="_blank"}
+1.  Make a copy of this <a href="https://docs.google.com/spreadsheets/d/1LtEflhLygH3dJ2aBFQfCZXF39b5V1KuE2FM6JlzZCG8" target="_blank">template</a>
     Google Sheets spreadsheet
 1.  Create an *Apps Script* project that is linked to this spreadsheet by
     navigating to *Tools > Script Editor*. Alternatively open the script
