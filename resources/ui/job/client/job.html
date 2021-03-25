@@ -18,13 +18,15 @@
 
 /**
  * @fileoverview This file contains the definition of the job object that is
- * used by the jobs infrastructure for parallel processing.
+ * used by the jobs infrastructure for parallel processing, along with child
+ * objects for audience 'create' and 'update' jobs respectively.
  */
 
 
 /**
- * Internal job status enum, not exposed in {@link globals.js} along with the
- * rest of the config values since these should not be changed.
+ * Defines the job status enum. These consts are used by the underlying jobs
+ * infrastructure to trigger pending jobs, count running jobs, and signal
+ * completion for success and error cases respectively.
  * @enum {string}
  */
 const JobStatus = {
@@ -35,15 +37,25 @@ const JobStatus = {
 };
 
 /**
- * Internal job type enum for proper deserialization in {@link #invoke_}.
- * Not exposed in {@link globals.js} along with the rest of the config values
- * since these should not be changed.
+ * Defines the job type enum. These consts are used for proper deserialization
+ * of Job and its child types in {@link JobUtil#fromJson}.
  * @enum {string}
  */
 const JobType = {
   AUDIENCE_CREATE: 'AUDIENCE_CREATE',
   AUDIENCE_UPDATE: 'AUDIENCE_UPDATE',
   GENERIC: 'GENERIC',
+};
+
+/**
+ * Defines the audience rules relationship type enum, which represents the
+ * desired logical relationship between the rules in the audience rules array.
+ * @see AudienceUpdateJob
+ * @enum {string}
+ */
+const AudienceRuleRelationshipType = {
+  AND: 'AND',
+  OR: 'OR',
 };
 
 /**
@@ -302,6 +314,260 @@ class Job {
    */
   getJobType() {
     return this.jobType_;
+  }
+}
+
+/**
+ * @class AudienceCreateJob representing the definition of a more specific Job
+ * type that is used for audience creation jobs.
+ */
+class AudienceCreateJob extends Job {
+  /**
+   * Defines an AudienceRule type.
+   * @typedef {{
+   *   name: string,
+   *   operator: string,
+   *   value: string,
+   *   negation: boolean,
+   * }} AudienceRule
+   */
+
+  /**
+   * @constructs an instance of AudienceCreateJob.
+   *
+   * @param {{
+   *   audienceName: string,
+   *   description: string,
+   *   lifeSpan: string,
+   *   idx: number,
+   *   floodlightId: (number|undefined),
+   * }} extParams
+   * @param {{
+   *   id: number,
+   *   index: number,
+   *   run: boolean,
+   *   logs: !Array<{date: !Date, message: string}>,
+   *   jobs: !Array<!AudienceCreateJob>,
+   *   offset: number,
+   *   error: string,
+   *   jobType: !JobType,
+   * }=} baseParams
+   */
+  constructor(
+      {
+        audienceName,
+        description,
+        lifeSpan,
+        idx,
+        floodlightId,
+      },
+      {
+        id = 0,
+        index = idx,
+        run = true,
+        logs = [],
+        jobs = [],
+        offset = 0,
+        error = '',
+        jobType = JobType.AUDIENCE_CREATE,
+      } = {}) {
+    super(id, index, run, logs, jobs, offset, error, jobType);
+
+    /** @private @const {string} */
+    this.audienceName_ = audienceName;
+
+    /** @private @const {string} */
+    this.description_ = description;
+
+    /** @private @const {string} */
+    this.lifeSpan_ = lifeSpan;
+
+    /** @private @const {number|undefined} */
+    this.floodlightId_ = floodlightId;
+
+    /**
+     * @private {{
+     *   relationship: !AudienceRuleRelationshipType,
+     *   rules: !Array<!AudienceRule>,
+     * }}
+     */
+    this.audienceRules_ = {
+      relationship: AudienceRuleRelationshipType.AND,
+      rules: [],
+    };
+  }
+
+  /**
+   * Returns the audienceName.
+   *
+   * @return {string} The audienceName
+   */
+  getAudienceName() {
+    return this.audienceName_;
+  }
+
+  /**
+   * Returns the description.
+   *
+   * @return {string} The description
+   */
+  getDescription() {
+    return this.description_;
+  }
+
+  /**
+   * Returns the lifeSpan.
+   *
+   * @return {string} The lifeSpan
+   */
+  getLifeSpan() {
+    return this.lifeSpan_;
+  }
+
+  /**
+   * Returns the floodlightId.
+   *
+   * @return {number|undefined} The floodlightId
+   */
+  getFloodlightId() {
+    return this.floodlightId_;
+  }
+
+  /**
+   * Returns the audience rules.
+   *
+   * @return {{
+   *   relationship: !AudienceRuleRelationshipType,
+   *   rules: !Array<!AudienceRule>,
+   * }} The audience rules
+   */
+  getAudienceRules() {
+    return this.audienceRules_;
+  }
+
+  /**
+   * Adds audience rules to the audience rules array, setting the relationship
+   * type (or resetting it if previously set).
+   *
+   * @param {!Array<!AudienceRule>} audienceRules The audience rules to add
+   * @param {!AudienceRuleRelationshipType=} audienceRuleRelationshipType The
+   *     audience rule relationship type
+   */
+  addAudienceRules(audienceRules, audienceRuleRelationshipType = undefined) {
+    if (audienceRuleRelationshipType) {
+      this.getAudienceRules().relationship = audienceRuleRelationshipType;
+    }
+    this.getAudienceRules().rules.push(...audienceRules);
+  }
+}
+
+/**
+ * @class AudienceUpdateJob representing the definition of a more specific Job
+ * type that is used for audience update jobs.
+ */
+class AudienceUpdateJob extends Job {
+  /**
+   * @constructs an instance of AudienceUpdateJob.
+   *
+   * @param {{
+   *   audienceId: string,
+   *   audienceListResource: !Object,
+   *   changedAttributes: {
+   *     id: string,
+   *     name: (string|undefined),
+   *     audienceListShares: (!Array<string>|undefined),
+   *   },
+   *   idx: number,
+   *   shareableWithAllAdvertisers: boolean,
+   * }} extParams
+   * @param {{
+   *   id: number,
+   *   index: number,
+   *   run: boolean,
+   *   logs: !Array<{date: !Date, message: string}>,
+   *   jobs: !Array<!AudienceUpdateJob>,
+   *   offset: number,
+   *   error: string,
+   *   jobType: !JobType,
+   * }=} baseParams
+   */
+  constructor(
+      {
+        audienceId,
+        audienceListResource,
+        changedAttributes,
+        idx,
+        shareableWithAllAdvertisers,
+      },
+      {
+        id = 0,
+        index = idx,
+        run = true,
+        logs = [],
+        jobs = [],
+        offset = 0,
+        error = '',
+        jobType = JobType.AUDIENCE_UPDATE,
+      } = {}) {
+    super(id, index, run, logs, jobs, offset, error, jobType);
+
+    /** @private @const {string} */
+    this.audienceId_ = audienceId;
+
+    /** @private @const {!Object} */
+    this.audienceListResource_ = audienceListResource;
+
+    /**
+     * @private @const {{
+     *   id: string,
+     *   name: (string|undefined),
+     *   audienceListShares: (!Array<string>|undefined),
+     * }}
+     */
+    this.changedAttributes_ = changedAttributes;
+
+    /** @private @const {boolean} */
+    this.shareableWithAllAdvertisers_ = shareableWithAllAdvertisers;
+  }
+
+  /**
+   * Returns the audienceId.
+   *
+   * @return {string} The audienceId
+   */
+  getAudienceId() {
+    return this.audienceId_;
+  }
+
+  /**
+   * Returns the audienceListResource.
+   *
+   * @return {!Object} The audienceListResource
+   */
+  getAudienceListResource() {
+    return this.audienceListResource_;
+  }
+
+  /**
+   * Returns the changedAttributes.
+   *
+   * @return {{
+   *   id: string,
+   *   name: (string|undefined),
+   *   audienceListShares: (!Array<string>|undefined),
+   * }} The changedAttributes
+   */
+  getChangedAttributes() {
+    return this.changedAttributes_;
+  }
+
+  /**
+   * Returns the shareableWithAllAdvertisers boolean.
+   *
+   * @return {boolean} The shareableWithAllAdvertisers boolean
+   */
+  isShareableWithAllAdvertisers() {
+    return this.shareableWithAllAdvertisers_;
   }
 }
 
