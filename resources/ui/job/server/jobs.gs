@@ -49,6 +49,8 @@ function showAudiencesSidebar() {
 /**
  * Defines the 'createAudiences' job.
  * @see jobs.html#createAudiencesHandler
+ * @see main.js#createAudiences
+ * @see JobName.CREATE_AUDIENCES
  *
  * @param {string} json A JSON representation of an object that contains an
  *     empty array that will be filled by the invoked method with single or
@@ -63,6 +65,8 @@ function createAudiencesJob(json) {
 /**
  * Defines the 'createAudience' job.
  * @see jobs.html#createAudiencesHandler
+ * @see main.js#createAudience
+ * @see JobName.CREATE_AUDIENCE
  *
  * @param {string} json A JSON representation of an audience definition to
  *     create
@@ -76,6 +80,7 @@ function createAudienceJob(json) {
  * Defines the 'updateAudiences' job.
  * @see jobs.html#updateAudiencesHandler
  * @see main.js#updateAudiences
+ * @see JobName.UPDATE_AUDIENCES
  *
  * @param {string} json A JSON representation of an object that contains an
  *     empty array that will be filled by the invoked method with single or
@@ -91,6 +96,7 @@ function updateAudiencesJob(json) {
  * Defines the 'updateAudience' job
  * @see jobs.html#updateAudiencesHandler
  * @see main.js#updateAudience
+ * @see JobName.UPDATE_AUDIENCE
  *
  * @param {string} json A JSON representation of an audience definition to
  *     update
@@ -104,6 +110,7 @@ function updateAudienceJob(json) {
  * Defines the 'updateAllAudiences' job.
  * @see jobs.html#updateAllAudiencesHandler
  * @see main.js#updateAllAudiences
+ * @see JobName.UPDATE_ALL_AUDIENCES
  *
  * @param {string} json A JSON representation of an object that contains an
  *     empty array that will be filled by the invoked method with all available
@@ -118,6 +125,7 @@ function updateAllAudiencesJob(json) {
  * Defines the 'clearLogs' job.
  * @see client/logger.js#clear
  * @see main.js#clearLogs
+ * @see JobName.CLEAR_LOGS
  *
  * @param {string} json A JSON representation of an object that contains the
  *     range to clear
@@ -131,6 +139,7 @@ function clearLogsJob(json) {
  * Defines the 'writeLogs' job.
  * @see client/logger.js#log
  * @see main.js#writeLogs
+ * @see JobName.WRITE_LOGS
  *
  * @param {string} json A JSON representation of an object that contains the log
  *     messages to write and an offset corresponding to the sheet rows to skip

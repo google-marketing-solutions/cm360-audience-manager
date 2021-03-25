@@ -47,6 +47,25 @@ const JobType = {
 };
 
 /**
+ * Defines the job name enum. These consts are used to refer to the different
+ * 'method' names that will be triggered asynchronously by the underlying jobs
+ * infrastructure.
+ * @see client/logger.js
+ * @see client/jobs.html
+ * @see server/jobs.js
+ * @enum {string}
+ */
+const JobName = {
+  CLEAR_LOGS: 'clearLogsJob',
+  CREATE_AUDIENCES: 'createAudiencesJob',
+  CREATE_AUDIENCE: 'createAudienceJob',
+  UPDATE_ALL_AUDIENCES: 'updateAllAudiencesJob',
+  UPDATE_AUDIENCES: 'updateAudiencesJob',
+  UPDATE_AUDIENCE: 'updateAudienceJob',
+  WRITE_LOGS: 'writeLogsJob',
+};
+
+/**
  * Defines the audience rules relationship type enum, which represents the
  * desired logical relationship between the rules in the audience rules array.
  * @see AudienceUpdateJob

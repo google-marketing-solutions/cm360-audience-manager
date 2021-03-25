@@ -29,11 +29,11 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
     .active {
       color: green;
     }
-    .error {
-      color: red;
-    }
     .not-active {
       color: #777777;
+    }
+    .error {
+      color: red;
     }
     .error-message {
       white-space: pre-wrap;
@@ -74,6 +74,7 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
         if (job.isError()) {
           return {
             jobId: job.getId(),
+            jobName: name,
             errorMessage: job.getError(),
           };
         }
@@ -90,9 +91,10 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
       try {
         setStatus('Running...', 'active');
         await Logger.getLogger().clear();
-        const createAudiencesResult = await Runner.init().run('createAudiencesJob', [new Job()]);
+        const createAudiencesResult =
+              await Runner.init().run(JobName.CREATE_AUDIENCES, [new Job()]);
         const createAudienceResult =
-              await Runner.init().run('createAudienceJob', createAudiencesResult[0].getJobs());
+              await Runner.init().run(JobName.CREATE_AUDIENCE, createAudiencesResult[0].getJobs());
         await Logger.getLogger().log(createAudienceResult);
         setStatus('Ready', 'not-active');
       } catch (error) {
@@ -105,9 +107,9 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
         setStatus('Running...', 'active');
         await Logger.getLogger().clear();
         const updateAudiencesResult =
-              await Runner.init().run('updateAudiencesJob', [new Job()]);
+              await Runner.init().run(JobName.UPDATE_AUDIENCES, [new Job()]);
         const updateAudienceResult =
-              await Runner.init().run('updateAudienceJob', updateAudiencesResult[0].getJobs());
+              await Runner.init().run(JobName.UPDATE_AUDIENCE, updateAudiencesResult[0].getJobs());
         await Logger.getLogger().log(updateAudienceResult);
         setStatus('Ready', 'not-active');
       } catch (error) {
@@ -120,9 +122,9 @@ This circumvents Apps Script's execution time limits and allows for parallelizat
         setStatus('Running...', 'active');
         await Logger.getLogger().clear();
         const updateAllAudiencesResult =
-              await Runner.init().run('updateAllAudiencesJob', [new Job()]);
-        const updateAudienceResult =
-              await Runner.init().run('updateAudienceJob', updateAllAudiencesResult[0].getJobs());
+              await Runner.init().run(JobName.UPDATE_ALL_AUDIENCES, [new Job()]);
+        const updateAudienceResult = await Runner.init().run(
+          JobName.UPDATE_AUDIENCE, updateAllAudiencesResult[0].getJobs());
         await Logger.getLogger().log(updateAudienceResult);
         setStatus('Ready', 'not-active');
       } catch (error) {

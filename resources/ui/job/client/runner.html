@@ -56,8 +56,8 @@ class Runner {
    * @param {?function(!Job): undefined=} progressCallback Optional callback
    *     that is triggered after each job completes successfully. Takes the
    *     completed job object parsed from a JSON string as a parameter
-   * @param {string=} command Optional name of the actual function that needs to
-   *     be executed in parallel by the jobs infrastructure
+   * @param {?JobName=} jobName Optional name of the actual function that needs
+   *     to be executed in parallel by the jobs infrastructure
    * @param {number=} maxJobs Optional maximum number of jobs to run in
    *     parallel. Defaults to and cannot exceed the config max
    */
@@ -66,7 +66,7 @@ class Runner {
       runnerJobs = {},
       runnerCallback = null,
       progressCallback = null,
-      command = '',
+      jobName = null,
       maxJobs = MAX_RUNNING_JOBS) {
     /** @private {string} */
     this.runnerStatus_ = runnerStatus;
@@ -80,8 +80,8 @@ class Runner {
     /** @private {?function(!Job): undefined} */
     this.progressCallback_ = progressCallback;
 
-    /** @private {string} */
-    this.command_ = command;
+    /** @private {?JobName} */
+    this.jobName_ = jobName;
 
     /** @private {number} */
     this.maxJobs_ = Math.min(maxJobs, MAX_RUNNING_JOBS);
@@ -117,7 +117,7 @@ class Runner {
             .withSuccessHandler((result) => this.successHandler(result))
             .withFailureHandler((error) =>
                 this.errorHandler(error.message.replace(/Error:/, '')))
-            [this.getCommand()](json);
+            [this.getJobName()](json);
 
         runningCount++;
       }
@@ -125,10 +125,10 @@ class Runner {
   }
 
   /**
-   * Executes a function identified by 'command'. Each instance in the jobs
+   * Executes a function identified by 'jobName'. Each instance in the jobs
    * array will be processed as one call to the function identified.
    *
-   * @param {string} command The name of the function to be called
+   * @param {!JobName} jobName The name of the function to be called
    * @param {!Array<!Job>} jobs The list of jobs to be passed to the job
    *     execution infrastructure. Each job in the list will spawn one call, and
    *     it will be passed as a parameter
@@ -136,7 +136,7 @@ class Runner {
    *     to be invoked for each job that finishes
    * @return {!Promise<!Array<!Job>>} A Promise for running the given jobs
    */
-  run(command, jobs, progressCallback = null) {
+  run(jobName, jobs, progressCallback = null) {
 
     return new Promise((resolve, reject) => {
       if (this.runnerStatus_ === RunnerStatus.RUNNING) {
@@ -145,7 +145,7 @@ class Runner {
         this.runnerStatus_ = RunnerStatus.RUNNING;
         this.runnerCallback_ = resolve;
         this.progressCallback_ = progressCallback || null;
-        this.command_ = command;
+        this.jobName_ = jobName;
         this.runnerJobs_ = {};
 
         jobs.forEach((job, index) => {
@@ -204,7 +204,7 @@ class Runner {
     this.runnerJobs_ = {};
     this.runnerCallback_ = null;
     this.progressCallback_ = null;
-    this.command_ = '';
+    this.jobName_ = null;
     this.maxJobs_ = MAX_RUNNING_JOBS;
   }
 
@@ -263,12 +263,12 @@ class Runner {
   }
 
   /**
-   * Returns the command.
+   * Returns the job name.
    *
-   * @return {string} The command
+   * @return {?JobName} The job name
    */
-  getCommand() {
-    return this.command_;
+  getJobName() {
+    return this.jobName_;
   }
 
   /**
