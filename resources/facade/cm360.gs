@@ -50,8 +50,9 @@ class CampaignManagerFacade {
 
     /** @private @const {!CampaignManagerApi|!CampaignManagerService} */
     this.campaignManager_ = apiFirst ?
-        new CampaignManagerApi(accountData) :
-        new CampaignManagerService(accountData, campaignManagerServiceWrapper);
+        new CampaignManagerApi(accountData.advertiserId) :
+        new CampaignManagerService(
+            accountData.advertiserId, campaignManagerServiceWrapper);
   }
 
   /**

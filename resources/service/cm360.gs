@@ -31,14 +31,13 @@ class CampaignManagerService {
   /**
    * @constructs an instance of CampaignManagerService.
    *
-   * @param {{networkId: string, advertiserId: string}} accountData The CM360
-   *     account data
+   * @param {string} advertiserId The CM360 Advertiser ID
    * @param {?Object=} campaignManagerServiceWrapper A wrapper for the built-in
    *     'CampaignManager' service to facilitate testing by passing a mock
    */
-  constructor(accountData, campaignManagerServiceWrapper = undefined) {
-    /** @private @const {{networkId: string, advertiserId: string}} */
-    this.accountData_ = accountData;
+  constructor(advertiserId, campaignManagerServiceWrapper = undefined) {
+    /** @private @const {string} */
+    this.advertiserId_ = advertiserId;
 
     /** @private @const {!Object} */
     this.campaignManagerService_ = campaignManagerServiceWrapper ?
@@ -68,8 +67,7 @@ class CampaignManagerService {
         .FloodlightConfigurations
         .get(
             profileId,
-            this.getAccountData().advertiserId,
-            {accountId: this.getAccountData().networkId})
+            this.getAdvertiserId())
         ['userDefinedVariableConfigurations'];
   }
 
@@ -85,7 +83,7 @@ class CampaignManagerService {
         .FloodlightActivities
         .list(
             profileId,
-            {advertiserId: this.getAccountData().advertiserId})
+            {advertiserId: this.getAdvertiserId()})
         ['floodlightActivities'];
   }
 
@@ -130,8 +128,7 @@ class CampaignManagerService {
         .RemarketingLists
         .list(
             profileId,
-            this.getAccountData().advertiserId,
-            {accountId: this.getAccountData().networkId})
+            this.getAdvertiserId())
         ['remarketingLists'];
   }
 
@@ -147,8 +144,7 @@ class CampaignManagerService {
         .RemarketingLists
         .update(
             remarketingListResource,
-            profileId,
-            {accountId: this.getAccountData().networkId});
+            profileId);
   }
 
   /**
@@ -167,8 +163,7 @@ class CampaignManagerService {
         .RemarketingLists
         .insert(
             remarketingListResource,
-            profileId,
-            {accountId: this.getAccountData().networkId});
+            profileId);
   }
 
   /**
@@ -226,12 +221,12 @@ class CampaignManagerService {
   }
 
   /**
-   * Returns the CM360 account data.
+   * Returns the CM360 Advertiser ID.
    *
-   * @return {{networkId: string, advertiserId: string}} The CM360 account data
+   * @return {string} The CM360 Advertiser ID
    */
-  getAccountData() {
-    return this.accountData_;
+  getAdvertiserId() {
+    return this.advertiserId_;
   }
 
 }

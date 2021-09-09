@@ -33,14 +33,13 @@ class CampaignManagerApi extends BaseApi {
   /**
    * @constructs an instance of CampaignManagerApi.
    *
-   * @param {{networkId: string, advertiserId: string}} accountData The CM360
-   *     account data
+   * @param {string} advertiserId The CM360 Advertiser ID
    */
-  constructor(accountData) {
+  constructor(advertiserId) {
     super(API_SCOPE, API_VERSION);
 
-    /** @private @const {{networkId: string, advertiserId: string}} */
-    this.accountData_ = accountData;
+    /** @private @const {string} */
+    this.advertiserId_ = advertiserId;
   }
 
   /**
@@ -65,7 +64,7 @@ class CampaignManagerApi extends BaseApi {
    */
   getUserDefinedVariableConfigurations(profileId) {
     const path = `userprofiles/${profileId}/floodlightConfigurations/` +
-        this.getAccountData().advertiserId;
+        this.getAdvertiserId();
 
     return this.executeApiRequest(
         /* requestUri= */ path,
@@ -82,7 +81,7 @@ class CampaignManagerApi extends BaseApi {
    */
   getFloodlightActivities(profileId) {
     const path = `userprofiles/${profileId}/floodlightActivities` +
-        `?advertiserId=${this.getAccountData().advertiserId}`;
+        `?advertiserId=${this.getAdvertiserId()}`;
 
     return this.executeApiRequest(
         /* requestUri= */ path,
@@ -120,7 +119,7 @@ class CampaignManagerApi extends BaseApi {
    */
   getRemarketingLists(profileId) {
     const path = `userprofiles/${profileId}/remarketingLists` +
-        `?advertiserId=${this.getAccountData().advertiserId}`;
+        `?advertiserId=${this.getAdvertiserId()}`;
 
     return this.executeApiRequest(
         /* requestUri= */ path,
@@ -225,12 +224,12 @@ class CampaignManagerApi extends BaseApi {
   }
 
   /**
-   * Returns the CM360 account data.
+   * Returns the CM360 Advertiser ID.
    *
-   * @return {{networkId: string, advertiserId: string}} The CM360 account data
+   * @return {string} The CM360 Advertiser ID
    */
-  getAccountData() {
-    return this.accountData_;
+  getAdvertiserId() {
+    return this.advertiserId_;
   }
 
 }
