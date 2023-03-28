@@ -21,7 +21,7 @@ limitations under the License.
     /**
      * Defines an AudienceRule type.
      * @typedef {{
-     *   group: string,
+     *   group: number,
      *   variableName: string,
      *   variableFriendlyName: string,
      *   operator: string,
@@ -34,27 +34,27 @@ limitations under the License.
      * @constructs an instance of Audience.
      *
      * @param {{
-     *   audienceId: string,
-     *   audienceName: string,
-     *   description: string,
+     *   id?: string,
+     *   name: string,
+     *   description?: string,
      *   lifeSpan: string,
-     *   floodlightId: string,
-     *   floodlightName: string,
-     *   rules: Array<AudienceRule>
-     *   shares: Array<!string>
+     *   floodlightId?: string,
+     *   floodlightName?: string,
+     *   rules?: AudienceRule[]
+     *   shares?: string[]
      * }}
      */
     constructor({
       id,
       name,
-      description,
+      description = '',
       lifeSpan,
       floodlightId,
       floodlightName,
-      rules,
-      shares,
+      rules = [],
+      shares = [],
     } = {}) {
-      /** @private @const {string} */
+      /** @private @const {string|undefined} */
       this.id_ = id;
 
       /** @private @const {string} */
@@ -67,16 +67,16 @@ limitations under the License.
       this.lifeSpan_ = lifeSpan;
 
       /** @private @const {string|undefined} */
-      this.floodlightId_ = String(floodlightId);
+      this.floodlightId_ = floodlightId;
 
       /** @private @const {string|undefined} */
       this.floodlightName_ = floodlightName;
 
-      /** @private {!Array<!AudienceRule>} */
-      this.rules_ = rules || [];
+      /** @private {AudienceRule[]} */
+      this.rules_ = rules;
 
-      /** @private {!Array<!string>} */
-      this.shares_ = shares || [];
+      /** @private {string[]} */
+      this.shares_ = shares;
     }
   }
 </script>

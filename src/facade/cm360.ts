@@ -56,7 +56,7 @@ export class CampaignManagerFacade {
   ) {
     this.accountData_ = accountData;
     this.apiFirst_ = apiFirst;
-    this.advertisersFilter = advertisersFilter || [];
+    this.advertisersFilter = advertisersFilter;
 
     this.campaignManager_ = apiFirst
       ? new CampaignManagerApi(accountData.advertiserId)
