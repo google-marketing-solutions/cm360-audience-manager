@@ -1,0 +1,308 @@
+<!--
+Copyright 2023 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<script>
+  /**
+   * @fileoverview This file encapsulates job execution functionality for the jobs
+   * infrastructure using JavaScript Promises.
+   */
+
+  /**
+   * Internal Runner status consts, not exposed in {@link globals.js} along with
+   * the rest of the config values since these should not be changed.
+   * @enum {string}
+   */
+  const RunnerStatus = {
+    IDLE: 'IDLE',
+    RUNNING: 'RUNNING',
+  };
+
+  /**
+   * Defines the max number of jobs that can be executed in parallel. The actual
+   * max is 30, so this is set to 28 to leave room for both the 'main' and 'ui'
+   * Apps Script threads.
+   * @type {number}
+   */
+  const MAX_RUNNING_JOBS = 28;
+
+  /**
+   * Runner representing a utility class for job execution using Promises.
+   */
+  class Runner {
+    /**
+     * @constructs an instance of Runner.
+     *
+     * @param {string=} runnerStatus Optional runner status
+     * @param {{id: (number|undefined), job: (!Job|undefined)}=} runnerJobs
+     *     Optional object containing key-value pairs of job ID to job object
+     * @param {?function(!Array<!Job>): undefined=} runnerCallback Optional
+     *     callback that is triggered after all jobs have finished (i.e. no longer
+     *     in the RUNNING state), accepts an array representation of 'runnerJobs'
+     * @param {?function(!Job): undefined=} progressCallback Optional callback
+     *     that is triggered after each job completes successfully. Takes the
+     *     completed job object parsed from a JSON string as a parameter
+     * @param {?JobName=} jobName Optional name of the actual function that needs
+     *     to be executed in parallel by the jobs infrastructure
+     * @param {number=} maxJobs Optional maximum number of jobs to run in
+     *     parallel. Defaults to and cannot exceed the config max
+     */
+    constructor(
+      runnerStatus = RunnerStatus.IDLE,
+      runnerJobs = {},
+      runnerCallback = null,
+      progressCallback = null,
+      jobName = null,
+      maxJobs = MAX_RUNNING_JOBS
+    ) {
+      /** @private {string} */
+      this.runnerStatus_ = runnerStatus;
+
+      /** @private {{id: (number|undefined), job: (!Job|undefined)}} */
+      this.runnerJobs_ = runnerJobs;
+
+      /** @private {?function(!Array<!Job>): undefined} */
+      this.runnerCallback_ = runnerCallback;
+
+      /** @private {?function(!Job): undefined} */
+      this.progressCallback_ = progressCallback;
+
+      /** @private {?JobName} */
+      this.jobName_ = jobName;
+
+      /** @private {number} */
+      this.maxJobs_ = Math.min(maxJobs, MAX_RUNNING_JOBS);
+    }
+
+    /**
+     * Returns a new instance of Runner.
+     * @see jobs.html
+     *
+     * @return {!Runner} The Runner instance
+     */
+    static init() {
+      return new Runner();
+    }
+
+    /**
+     * Executes pending jobs respecting the limit set by
+     * {@link Runner#getMaxJobs}.
+     */
+    runJobs() {
+      const jobs = this.getJobs();
+      const pendingJobs = jobs.filter(job => job.isPending());
+      let runningCount = jobs.filter(job => job.isRunning()).length;
+
+      while (pendingJobs.length !== 0 && runningCount < this.getMaxJobs()) {
+        const job = pendingJobs.shift();
+
+        if (job) {
+          job.run();
+          const json = JSON.stringify(job);
+
+          google.script.run
+            .withSuccessHandler(result => this.successHandler(result))
+            .withFailureHandler(error =>
+              this.errorHandler(error.message.replace(/Error:/, ''))
+            )
+            [this.getJobName()](json);
+
+          runningCount++;
+        }
+      }
+    }
+
+    /**
+     * Executes a function identified by 'jobName'. Each instance in the jobs
+     * array will be processed as one call to the function identified.
+     *
+     * @param {!JobName} jobName The name of the function to be called
+     * @param {!Array<!Job>} jobs The list of jobs to be passed to the job
+     *     execution infrastructure. Each job in the list will spawn one call, and
+     *     it will be passed as a parameter
+     * @param {?function(!Job): undefined=} progressCallback Optional callback
+     *     to be invoked for each job that finishes
+     * @return {!Promise<!Array<!Job>>} A Promise for running the given jobs
+     */
+    run(jobName, jobs, progressCallback = null) {
+      return new Promise((resolve, reject) => {
+        if (this.runnerStatus_ === RunnerStatus.RUNNING) {
+          reject(new Error('Runner is already processing jobs!'));
+        } else if (!jobs.length) {
+          resolve(jobs);
+        } else {
+          this.runnerStatus_ = RunnerStatus.RUNNING;
+          this.runnerCallback_ = resolve;
+          this.progressCallback_ = progressCallback || null;
+          this.jobName_ = jobName;
+          this.runnerJobs_ = {};
+
+          jobs.forEach((job, index) => {
+            job.setId(index);
+            this.runnerJobs_[job.getId()] = job;
+          });
+          this.processStatus();
+        }
+      });
+    }
+
+    /**
+     * Checks the status of running jobs, and once all have finished resets the
+     * runner instance and invokes runnerCallback_, passing all jobs as an array.
+     */
+    processStatus() {
+      this.runJobs();
+
+      const jobs = this.getJobs();
+      const unfinishedJobs = jobs.filter(
+        job => job.isRunning() || job.isPending()
+      );
+
+      if (jobs.length !== 0 && unfinishedJobs.length === 0) {
+        if (this.runnerCallback_) {
+          this.runnerCallback_(jobs);
+        }
+        this.reset();
+      }
+    }
+
+    /**
+     * Default success handler.
+     * @see #runJobs
+     *
+     * @param {string} input A JSON string of the job that completed successfully
+     */
+    successHandler(input) {
+      this.handler_(input);
+    }
+
+    /**
+     * Default error handler.
+     * @see #runJobs
+     *
+     * @param {string} input A JSON string of the job that failed
+     */
+    errorHandler(input) {
+      this.handler_(input);
+    }
+
+    /**
+     * Resets this runner instance's state so that it can be reused.
+     */
+    reset() {
+      this.runnerStatus_ = RunnerStatus.IDLE;
+      this.runnerJobs_ = {};
+      this.runnerCallback_ = null;
+      this.progressCallback_ = null;
+      this.jobName_ = null;
+      this.maxJobs_ = MAX_RUNNING_JOBS;
+    }
+
+    /**
+     * Converts the 'runnerJobs' dict of jobId to job object to an array of jobs.
+     *
+     * @return {!Array<!Job>} The array of jobs
+     */
+    getJobs() {
+      const jobs = [];
+
+      Object.keys(this.getJobsAsDict()).forEach(jobId => {
+        if (this.getJobsAsDict()[jobId]) {
+          jobs.push(this.getJobsAsDict()[jobId]);
+        }
+      });
+      return jobs;
+    }
+
+    /**
+     * Returns the jobs associated with this runner instance, as-is.
+     *
+     * @return {{id: (number|undefined), job: (!Job|undefined)}} The jobs of this
+     *     runner instance
+     */
+    getJobsAsDict() {
+      return this.runnerJobs_;
+    }
+
+    /**
+     * Returns the runnerStatus.
+     *
+     * @return {string} The runnerStatus
+     */
+    getRunnerStatus() {
+      return this.runnerStatus_;
+    }
+
+    /**
+     * Returns the runnerCallback.
+     *
+     * @return {?function(!Array<!Job>): undefined} The runnerCallback
+     */
+    getRunnerCallback() {
+      return this.runnerCallback_;
+    }
+
+    /**
+     * Returns the progressCallback.
+     *
+     * @return {?function(!Job): undefined} The progressCallback
+     */
+    getProgressCallback() {
+      return this.progressCallback_;
+    }
+
+    /**
+     * Returns the job name.
+     *
+     * @return {?JobName} The job name
+     */
+    getJobName() {
+      return this.jobName_;
+    }
+
+    /**
+     * Returns the max number of jobs to run in parallel.
+     *
+     * @return {number} The max number of jobs
+     */
+    getMaxJobs() {
+      return this.maxJobs_;
+    }
+
+    /**
+     * Default handler. Adds the succeeded or failed job to runnerJobs_, triggers
+     * progressCallback_ if defined and {@link Runner#processStatus} to check if
+     * all jobs have completed.
+     * @see #successHandler
+     * @see #errorHandler
+     *
+     * @param {string} input A JSON string of the job that succeeded or failed
+     * @private
+     */
+    handler_(input) {
+      const parsedInput = JSON.parse(input);
+      const job = JobUtil.fromJson(parsedInput);
+
+      if (!job.getError()) {
+        job.complete();
+      }
+      this.runnerJobs_[job.getId()] = job;
+
+      if (this.progressCallback_) {
+        this.progressCallback_(job);
+      }
+      this.processStatus();
+    }
+  }
+</script>

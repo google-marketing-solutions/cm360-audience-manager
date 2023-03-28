@@ -1,0 +1,482 @@
+<!--
+Copyright 2023 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!--
+Utility file to enable running jobs in Google Sheets by opening a sidebar on the user's browser.
+This circumvents Apps Script's execution time limits and allows for parallelization.
+<-->
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8" />
+  <title>CM360 Audiences Bulk Manager</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+    button {
+      margin-top: 10px;
+      width: 100%;
+      background-color: #027ad6;
+      font-weight: bold;
+      border-radius: 2px;
+      outline: none;
+      border: 1px solid #027ad6;
+      color: white;
+      transition: background-color 150ms linear;
+      cursor: pointer;
+    }
+    button:not(.flat-button) {
+      padding: 15px;
+    }
+    button:hover:not(:disabled),
+    button.back {
+      background-color: white;
+      border: 1px solid #027ad6;
+      color: #027ad6;
+    }
+    button.back:hover {
+      background-color: #027ad6;
+      border: 1px solid #027ad6;
+      color: white;
+    }
+    button:disabled,
+    button[disabled] {
+      cursor: auto;
+      background-color: #ccc !important;
+      border-color: #bbb !important;
+      color: white !important;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .loading {
+      font-weight: bold;
+      text-align: center;
+      color: green;
+    }
+    #header {
+      position: fixed;
+      padding: 8px;
+      width: 100%;
+      background-color: white;
+    }
+    #brand {
+      text-align: center;
+      color: #027ad6;
+      font-size: 24px;
+    }
+    #status {
+      font-weight: bold;
+      text-align: center;
+    }
+    #content {
+      padding: 8px;
+      padding-top: 100px;
+    }
+    #run {
+      background-color: #005495;
+      border: 1px solid #005495;
+    }
+    #run:hover {
+      background-color: white;
+      color: #005495;
+    }
+    .selector-controls {
+      justify-content: space-between;
+      display: flex;
+      gap: 10px;
+    }
+    #selector-form {
+      margin-top: 10px;
+    }
+    .checkbox-content {
+      margin-left: 10px;
+    }
+    .active {
+      color: green;
+    }
+    .not-active {
+      color: #777777;
+    }
+    .error {
+      color: red;
+    }
+    .error-message {
+      white-space: pre-wrap;
+    }
+  </style>
+  <script>
+    class JobError extends Error {
+      constructor(errors = [], ...params) {
+        super(...params);
+        this.name = 'JobError';
+        this.errors = errors;
+      }
+    }
+
+    const STATUS = {
+      idle: {
+        type: 'idle',
+        text: 'Ready',
+        className: 'not-active',
+      },
+      running: {
+        type: 'running',
+        text: 'Running...',
+        className: 'active',
+      },
+      error: {
+        type: 'error',
+        text: 'Error',
+        className: 'error',
+      },
+    };
+
+    function setStatus(status, jobError = undefined, customText = undefined) {
+      const statusElem = document.getElementById('status');
+      statusElem.innerText = customText || status.text;
+      statusElem.className = status.className;
+
+      document
+        .querySelectorAll('button:not(.back)')
+        .forEach(elem => (elem.disabled = status.type === STATUS.running.type));
+
+      const errorElem = document.getElementById('error');
+      let errorMessage = '';
+
+      if (jobError) {
+        errorMessage =
+          'An error occurred! Please check the ' +
+          '<a href="https://script.google.com/home/executions" target="_blank">script logs</a> ' +
+          'for detailed information.<br/>Errors:';
+
+        jobError.errors.forEach(error => {
+          errorMessage += `<br/>${JSON.stringify(error, null, 2)}`;
+        });
+      }
+      errorElem.innerHTML = errorMessage;
+    }
+
+    async function triggerAsyncJobs(name, jobs) {
+      const result = await Runner.init().run(name, jobs);
+      const errors = result
+        .map(job => {
+          if (job.isError()) {
+            return {
+              jobId: job.getId(),
+              jobName: name,
+              errorMessage: job.getError(),
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+
+      if (errors.length !== 0) {
+        throw new JobError(errors);
+      }
+
+      return result;
+    }
+
+    async function loadAudiencesHandler() {
+      try {
+        setStatus(STATUS.running, undefined, 'Loading Audiences...');
+        await Logger.getLogger().clear();
+
+        const loadAudiencesResult = await triggerAsyncJobs(
+          JobName.LOAD_AUDIENCES,
+          [new Job()]
+        );
+
+        const loadAudienceResult = await triggerAsyncJobs(
+          JobName.LOAD_AUDIENCE,
+          loadAudiencesResult[0].getJobs()
+        );
+
+        await Logger.getLogger().log(loadAudienceResult);
+
+        extractAndOutputRules();
+      } catch (error) {
+        setStatus(STATUS.error, error);
+      }
+    }
+
+    async function processAudiencesHandler() {
+      try {
+        setStatus(STATUS.running, undefined, 'Processing Audiences...');
+        await Logger.getLogger().clear();
+
+        const processAudiencesResult = await triggerAsyncJobs(
+          JobName.PROCESS_AUDIENCES,
+          [new Job()]
+        );
+
+        const processAudienceResult = await triggerAsyncJobs(
+          JobName.PROCESS_AUDIENCE,
+          processAudiencesResult[0].getJobs()
+        );
+
+        await Logger.getLogger().log(processAudienceResult);
+        setStatus(STATUS.idle);
+      } catch (error) {
+        setStatus(STATUS.error, error);
+      }
+    }
+
+    function goBack() {
+      document
+        .querySelectorAll('section')
+        .forEach(elem => elem.classList.add('hidden'));
+      document.getElementById('main').classList.remove('hidden');
+    }
+
+    function loadSelectorData(force) {
+      setStatus(STATUS.running);
+      document.getElementById('selector-content').classList.add('hidden');
+
+      // Fetch data
+      google.script.run
+        .withSuccessHandler(result => {
+          data = result;
+
+          // Show data
+          buildForm();
+          setStatus(STATUS.idle);
+        })
+        .getSidebarContent();
+    }
+
+    let data = [];
+
+    function buildForm() {
+      if (data.length) {
+        document
+          .getElementById('selector-form-no-data')
+          .classList.add('hidden');
+        document.getElementById('selector-toggles').classList.remove('hidden');
+      } else {
+        document
+          .getElementById('selector-form-no-data')
+          .classList.remove('hidden');
+        document.getElementById('selector-toggles').classList.add('hidden');
+      }
+
+      let output = '';
+
+      for (let i = 0; i < data.length; i++) {
+        if (data[i] === '') {
+          continue;
+        }
+
+        let val;
+        let checked = false;
+
+        if (typeof data[i] === 'object') {
+          val = data[i].val;
+          checked = data[i].checked;
+        } else {
+          val = data[i];
+        }
+
+        output += `<input type='checkbox' name='${val}' value='${val}'`;
+
+        if (checked) {
+          output += ` checked='${checked}'`;
+        }
+
+        output += '>';
+        output += `<span class='checkbox-content'>${val}</span>`;
+        output += '<br>';
+      }
+
+      document.getElementById('selector-form').innerHTML = output;
+      document.getElementById('selector-content').classList.remove('hidden');
+    }
+
+    function applySelectorData() {
+      setStatus(STATUS.running);
+      document.getElementById('selector-apply').disabled = true;
+
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus(STATUS.idle);
+          document.getElementById('selector-apply').disabled = false;
+        })
+        //.fillSelectedCell(document.getElementById('selector-form'));
+        .fillSelectedCell(
+          [...document.querySelectorAll('#selector-form input:checked')].map(
+            el => el.value
+          )
+        );
+    }
+
+    function applyToAllAdvertisers() {
+      setStatus(STATUS.running);
+      document.getElementById('selector-apply-all').disabled = true;
+
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus(STATUS.idle);
+          document.getElementById('selector-apply-all').disabled = false;
+        })
+        .setAllAdvertisers(document.getElementById('selector-form'));
+    }
+
+    function openSection(sectionId) {
+      document
+        .querySelectorAll('section')
+        .forEach(elem => elem.classList.add('hidden'));
+      document.getElementById(sectionId).classList.remove('hidden');
+    }
+
+    function toggleCheckboxes(checked) {
+      const checkboxes = document.querySelectorAll(
+        '#selector-form input[type=checkbox]'
+      );
+
+      for (const checkbox of checkboxes) {
+        checkbox.checked = checked;
+      }
+    }
+
+    function loadCustomVariables() {
+      setStatus(STATUS.running);
+
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus(STATUS.idle);
+        })
+        .getCustomVariables();
+    }
+
+    function loadFloodlights() {
+      setStatus(STATUS.running);
+
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus(STATUS.idle);
+        })
+        .getFloodlights();
+    }
+
+    function loadAdvertisers() {
+      setStatus(STATUS.running);
+
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus(STATUS.idle);
+        })
+        .getAdvertisers();
+    }
+
+    function extractAndOutputRules() {
+      setStatus(STATUS.running, undefined, 'Updating rules...');
+
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus(STATUS.idle);
+        })
+        .extractAndOutputRules();
+    }
+
+    function requestAccess() {
+      setStatus(STATUS.running);
+
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus(STATUS.idle);
+        })
+        .requestAccess();
+    }
+
+    function initialize() {
+      loadCustomVariables();
+      loadFloodlights();
+      loadAdvertisers();
+      loadAudiencesHandler();
+    }
+  </script>
+  <?!= include('static/audience') ?>
+  <?!= include('static/job') ?>
+  <?!= include('static/utils') ?>
+  <?!= include('static/runner') ?>
+  <?!= include('static/logger') ?>
+</head>
+<body onload='openSection("main");'>
+  <div id="header">
+    <h1 id="brand">Audience Manager</h1>
+    <div id="status" class="not-active">Ready</div>
+  </div>
+
+  <div id="content">
+    <section id="main">
+      <button id="open-setup" onclick='openSection("setup")'>Setup</button>
+
+      <button
+        id="open-selector"
+        onclick='openSection("selector"); loadSelectorData();'
+      >
+        Advertiser Share
+      </button>
+
+      <button id="run" onclick="processAudiencesHandler()">Run</button>
+    </section>
+
+    <section id="setup">
+      <button class="back" onclick="goBack()">&larr; Back</button>
+
+      <button onclick="requestAccess()">Request Access</button>
+      <button onclick="initialize()">Initialize</button>
+      <button onclick="loadCustomVariables()">Load Custom Variables</button>
+      <button onclick="loadFloodlights()">Load Floodlights</button>
+      <button onclick="loadAdvertisers()">Load Advertisers</button>
+      <button onclick="loadAudiencesHandler()">Load Audiences</button>
+    </section>
+
+    <section id="selector" class="hidden">
+      <button class="back" onclick="goBack()">&larr; Back</button>
+
+      <div class="selector-controls">
+        <button id="selector-apply" onclick="applySelectorData()">Apply</button>
+        <button id="selector-apply-all" onclick="applyToAllAdvertisers()">
+          Apply to all
+        </button>
+        <button onclick="loadSelectorData(true)">Refresh</button>
+      </div>
+
+      <div id="selector-content">
+        <div id="selector-toggles" class="selector-controls hidden">
+          <button class="flat-button" onclick="toggleCheckboxes(true)">
+            Select all
+          </button>
+          <button class="flat-button" onclick="toggleCheckboxes(false)">
+            Unselect all
+          </button>
+        </div>
+
+        <form id="selector-form" name="form"></form>
+
+        <p id="selector-form-no-data" class="hidden">No data</p>
+      </div>
+    </section>
+  </div>
+
+  <div id="error" class="error-message"></div>
+</body>
