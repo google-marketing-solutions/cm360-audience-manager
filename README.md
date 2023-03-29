@@ -20,14 +20,24 @@ limitations under the License.
 
 ## Overview
 
-The CM360 Audience Manager lets you create and manage Audience Lists (a.k.a Remarketing Lists) in bulk as well as share created Audience Lists with multiple advertisers within the same CM360 network.
+The CM360 Audience Manager lets you create and manage Audience Lists (a.k.a. Remarketing Lists) in bulk as well as share created Audience Lists with multiple advertisers within the same CM360 network.
 
 Contributions are highly encouraged! See [CONTRIBUTING](CONTRIBUTING).
 
 ## Getting started
 
+1. Create a [Google Cloud](https://console.cloud.google.com) project or re-use an existing one
+
+1. Create an [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
+    - Follow the instructions in the setup wizard
+
+1. Enable the following APIs:
+    - [Campaign Manager 360](https://console.cloud.google.com/apis/library/dfareporting.googleapis.com)
+
 1.  Make a copy of the
-    [Google Shets Template](https://docs.google.com/spreadsheets/d/1wd1kw4dIHY5IVJFsw1v8_smZlU9BBzKKVWTgXGzzs_U)
+    [Google Sheets Template](https://docs.google.com/spreadsheets/d/1wd1kw4dIHY5IVJFsw1v8_smZlU9BBzKKVWTgXGzzs_U)
+
+1. Set your GCP Project Number at Extensions > Apps Script > Project Settings > Google Cloud Platform (GCP) Project
 
 1.  Follow the instructions in the _Usage Guide_ tab of the spreadsheet to start using the solution
 
