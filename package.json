@@ -18,7 +18,7 @@
     "license:add": "license-check-and-add add -f license-config.json"
   },
   "dependencies": {
-    "@google/clasp": "^2.4.2",
+    "@google/clasp": "^3.2.0",
     "@rollup/plugin-node-resolve": "^15.0.1",
     "@types/google-apps-script": "^1.0.59",
     "@types/jest": "^29.5.0",
